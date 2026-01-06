@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reign Wound Tracker</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1e1e2e;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #e0d7f5;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #b8a8d8;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .hit-location {
+            background: #2a2a3e;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 2px solid #4a3a6a;
+            transition: all 0.3s ease;
+        }
+        
+        .hit-location:hover {
+            border-color: #00d4aa;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 170, 0.3);
+        }
+        
+        .location-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .location-name {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #e0d7f5;
+        }
+        
+        .location-number {
+            background: #00d4aa;
+            color: #1a0a2e;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .damage-section {
+            margin-bottom: 10px;
+        }
+        
+        .damage-type {
+            font-weight: 600;
+            color: #b8a8d8;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .boxes {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .box {
+            width: 35px;
+            height: 35px;
+            border: 2px solid #4a3a6a;
+            background: #1e1e2e;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #e0d7f5;
+        }
+        
+        .box:hover {
+            transform: scale(1.1);
+            border-color: #00d4aa;
+        }
+        
+        .box.filled.shock {
+            background: #00d4aa;
+            border-color: #00f5c4;
+            color: #1a0a2e;
+        }
+        
+        .box.filled.killing {
+            background: #ff4757;
+            border-color: #ff6b81;
+            color: white;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .reset-btn {
+            background: #ff4757;
+            color: white;
+        }
+        
+        .reset-btn:hover {
+            background: #ff6b81;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+        }
+        
+        .save-btn {
+            background: #00d4aa;
+            color: #1a0a2e;
+        }
+        
+        .save-btn:hover {
+            background: #00f5c4;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 170, 0.4);
+        }
+        
+        .load-btn {
+            background: #9b7ec4;
+            color: white;
+        }
+        
+        .load-btn:hover {
+            background: #8a6db3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(155, 126, 196, 0.4);
+        }
+        
+        .dice-roller {
+            background: linear-gradient(135deg, #2d1b4e 0%, #3d2a5e 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+            border: 1px solid #4a3a6a;
+        }
+        
+        .dice-roller h2 {
+            color: #e0d7f5;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            text-align: center;
+        }
+        
+        .dice-input-section {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .dice-input-section label {
+            color: #e0d7f5;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+        
+        .dice-input-section input {
+            width: 80px;
+            padding: 10px;
+            border: 2px solid #4a3a6a;
+            background: #2a2a3e;
+            color: #e0d7f5;
+            border-radius: 8px;
+            font-size: 1.1em;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .roll-btn {
+            background: #00d4aa;
+            color: #1a0a2e;
+            padding: 12px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .roll-btn:hover {
+            background: #00f5c4;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 170, 0.4);
+        }
+        
+        .dice-results {
+            margin-top: 20px;
+        }
+        
+        .all-dice {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .die {
+            width: 50px;
+            height: 50px;
+            background: #2a2a3e;
+            border: 2px solid #4a3a6a;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #e0d7f5;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .die.matched {
+            background: #00d4aa;
+            border-color: #00f5c4;
+            color: #1a0a2e;
+            transform: scale(1.15);
+            box-shadow: 0 5px 15px rgba(0, 212, 170, 0.5);
+        }
+        
+        .matches-section {
+            background: #2a2a3e;
+            border: 1px solid #4a3a6a;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .matches-section h3 {
+            color: #00d4aa;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        
+        .match-result {
+            display: inline-block;
+            background: #00d4aa;
+            color: #1a0a2e;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin: 5px;
+            font-size: 1.3em;
+            font-weight: bold;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .no-matches {
+            color: #b8a8d8;
+            font-style: italic;
+            text-align: center;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #2a2a3e;
+            border: 1px solid #4a3a6a;
+            border-radius: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #e0d7f5;
+        }
+        
+        .legend-box {
+            width: 25px;
+            height: 25px;
+            border-radius: 4px;
+            border: 2px solid;
+        }
+        
+        .legend-box.shock {
+            background: #00d4aa;
+            border-color: #00f5c4;
+        }
+        
+        .legend-box.killing {
+            background: #ff4757;
+            border-color: #ff6b81;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .boxes {
+                gap: 6px;
+            }
+            
+            .box {
+                width: 30px;
+                height: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Cookie helper functions
+        const setCookie = (name, value, days = 365) => {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + date.toUTCString();
+            document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+        };
+
+        const getCookie = (name) => {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) {
+                    return decodeURIComponent(c.substring(nameEQ.length, c.length));
+                }
+            }
+            return null;
+        };
+
+        const DiceRoller = () => {
+            const [numDice, setNumDice] = useState(5);
+            const [diceResults, setDiceResults] = useState([]);
+            const [matches, setMatches] = useState([]);
+
+            const rollDice = () => {
+                // Roll the dice
+                const results = Array(numDice).fill(0).map(() => Math.floor(Math.random() * 10) + 1);
+                setDiceResults(results);
+
+                // Find matches
+                const counts = {};
+                results.forEach(die => {
+                    counts[die] = (counts[die] || 0) + 1;
+                });
+
+                // Get all sets (2 or more of the same)
+                const foundMatches = Object.entries(counts)
+                    .filter(([_, count]) => count >= 2)
+                    .map(([number, count]) => ({
+                        count: count,
+                        number: parseInt(number),
+                        display: `${count}x${number}`
+                    }))
+                    .sort((a, b) => {
+                        // Sort by count first (higher is better), then by number (higher is better)
+                        if (b.count !== a.count) return b.count - a.count;
+                        return b.number - a.number;
+                    });
+
+                setMatches(foundMatches);
+            };
+
+            const isMatched = (dieValue) => {
+                return matches.some(match => match.number === dieValue);
+            };
+
+            return (
+                <div className="dice-roller">
+                    <h2>🎲 ORE Dice Roller</h2>
+                    <div className="dice-input-section">
+                        <label htmlFor="numDice">Number of Dice:</label>
+                        <input
+                            id="numDice"
+                            type="number"
+                            min="1"
+                            max="20"
+                            value={numDice}
+                            onChange={(e) => setNumDice(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+                        />
+                        <button className="roll-btn" onClick={rollDice}>
+                            Roll Dice
+                        </button>
+                    </div>
+
+                    {diceResults.length > 0 && (
+                        <div className="dice-results">
+                            <div className="all-dice">
+                                {diceResults.map((die, index) => (
+                                    <div 
+                                        key={index} 
+                                        className={`die ${isMatched(die) ? 'matched' : ''}`}
+                                    >
+                                        {die}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="matches-section">
+                                <h3>Matches:</h3>
+                                {matches.length > 0 ? (
+                                    matches.map((match, index) => (
+                                        <span key={index} className="match-result">
+                                            {match.display}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <p className="no-matches">No matches found</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const HitLocation = ({ name, number, wounds, onWoundChange }) => {
+            const maxBoxes = 10;
+            
+            const handleBoxClick = (index) => {
+                const newWounds = [...wounds];
+                
+                // Cycle through: empty -> shock -> killing -> empty
+                if (!newWounds[index]) {
+                    newWounds[index] = 'shock';
+                } else if (newWounds[index] === 'shock') {
+                    newWounds[index] = 'killing';
+                } else {
+                    newWounds[index] = null;
+                }
+                
+                onWoundChange(name, newWounds);
+            };
+            
+            return (
+                <div className="hit-location">
+                    <div className="location-header">
+                        <div className="location-name">{name}</div>
+                        <div className="location-number">{number}</div>
+                    </div>
+                    
+                    <div className="damage-section">
+                        <div className="boxes">
+                            {[...Array(maxBoxes)].map((_, i) => (
+                                <div
+                                    key={i}
+                                    className={`box ${wounds[i] ? `filled ${wounds[i]}` : ''}`}
+                                    onClick={() => handleBoxClick(i)}
+                                >
+                                    {wounds[i] === 'shock' ? 'S' : wounds[i] === 'killing' ? 'K' : ''}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const getInitialHitLocations = () => ({
+                'Head': { number: '10', wounds: Array(10).fill(null) },
+                'Torso': { number: '7-9', wounds: Array(10).fill(null) },
+                'Left Arm': { number: '5-6', wounds: Array(10).fill(null) },
+                'Right Arm': { number: '3-4', wounds: Array(10).fill(null) },
+                'Left Leg': { number: '2', wounds: Array(10).fill(null) },
+                'Right Leg': { number: '1', wounds: Array(10).fill(null) }
+            });
+
+            const [hitLocations, setHitLocations] = useState(() => {
+                try {
+                    const saved = getCookie('reignWounds');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        // Validate that the structure is correct
+                        if (parsed && typeof parsed === 'object') {
+                            return parsed;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading from cookie:', error);
+                }
+                return getInitialHitLocations();
+            });
+
+            useEffect(() => {
+                try {
+                    setCookie('reignWounds', JSON.stringify(hitLocations));
+                } catch (error) {
+                    console.error('Error saving to cookie:', error);
+                }
+            }, [hitLocations]);
+
+            const handleWoundChange = (location, wounds) => {
+                setHitLocations(prev => ({
+                    ...prev,
+                    [location]: {
+                        ...prev[location],
+                        wounds: wounds
+                    }
+                }));
+            };
+
+            const handleReset = () => {
+                if (window.confirm('Are you sure you want to clear all wounds?')) {
+                    setHitLocations(getInitialHitLocations());
+                }
+            };
+
+            const handleSave = () => {
+                const dataStr = JSON.stringify(hitLocations, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'reign-wounds.json';
+                link.click();
+                URL.revokeObjectURL(url);
+            };
+
+            const handleLoad = () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const loaded = JSON.parse(event.target.result);
+                            setHitLocations(loaded);
+                        } catch (error) {
+                            alert('Error loading file. Please make sure it\'s a valid wound tracker file.');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            };
+
+            return (
+                <div className="container">
+                    <h1>⚔️ Reign Wound Tracker</h1>
+                    <div className="subtitle">ORE System - Click to cycle: Empty → Shock → Killing</div>
+                    
+                    <DiceRoller />
+                    
+                    {Object.entries(hitLocations).map(([name, data]) => (
+                        <HitLocation
+                            key={name}
+                            name={name}
+                            number={data.number}
+                            wounds={data.wounds}
+                            onWoundChange={handleWoundChange}
+                        />
+                    ))}
+                    
+                    <div className="legend">
+                        <div className="legend-item">
+                            <div className="legend-box shock"></div>
+                            <span>Shock Damage</span>
+                        </div>
+                        <div className="legend-item">
+                            <div className="legend-box killing"></div>
+                            <span>Killing Damage</span>
+                        </div>
+                    </div>
+                    
+                    <div className="controls">
+                        <button className="reset-btn" onClick={handleReset}>
+                            Clear All
+                        </button>
+                        <button className="save-btn" onClick={handleSave}>
+                            Save
+                        </button>
+                        <button className="load-btn" onClick={handleLoad}>
+                            Load
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
