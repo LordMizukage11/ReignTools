@@ -1,627 +1,598 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warcraft ORE Wound Tracker</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #0a0a0a;
-        }
-
-        /* --- THEME VARIABLES --- */
-        .app-wrapper {
-            min-height: 100vh;
-            padding: 20px;
-            transition: all 0.4s ease;
-        }
-
-        .theme-alliance {
-            background: linear-gradient(135deg, #001b3a 0%, #003366 100%);
-            --bg-panel: #002244;
-            --bg-box: #001122;
-            --text-main: #e0e6ed;
-            --text-sub: #8ea4b8;
-            --border-color: #004d99;
-            --border-hover: #0074D9;
-            --accent: #FFD700;
-            --btn-text: #001122;
-            --shock-color: #0074D9;
-            --killing-color: #FFD700;
-            --killing-text: #001122;
-            --shock-text: #ffffff;
-        }
-
-        .theme-horde {
-            background: linear-gradient(135deg, #1a1a1a 0%, #050505 100%);
-            --bg-panel: #242424;
-            --bg-box: #121212;
-            --text-main: #f0e6d2; 
-            --text-sub: #a89f91;
-            --border-color: #8a0303; 
-            --border-hover: #e32424; 
-            --accent: #d32f2f; 
-            --btn-text: #ffffff;
-            --shock-color: #d4af37; 
-            --killing-color: #d32f2f; 
-            --killing-text: #ffffff;
-            --shock-text: #1a1a1a;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: var(--bg-panel);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-            border: 1px solid var(--border-color);
-            transition: all 0.4s ease;
-        }
-        
-        h1 {
-            text-align: center;
-            color: var(--accent);
-            margin-bottom: 5px;
-            font-size: 2.5em;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
-        
-        .subtitle {
-            text-align: center;
-            color: var(--text-sub);
-            margin-bottom: 25px;
-            font-size: 1.1em;
-        }
-
-        /* --- THEME TOGGLE --- */
-        .theme-toggle-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 30px;
-            background: var(--bg-box);
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-
-        .theme-label {
-            font-weight: bold;
-            font-size: 1.2em;
-            color: var(--text-sub);
-            transition: color 0.3s;
-        }
-
-        .theme-label.active { color: var(--accent); }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
-
-        .switch input { opacity: 0; width: 0; height: 0; }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #004d99;
-            transition: .4s;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px; width: 26px;
-            left: 4px; bottom: 4px;
-            background-color: white;
-            transition: .4s;
-        }
-
-        input:checked + .slider { background-color: #8a0303; }
-        input:checked + .slider:before { transform: translateX(26px); }
-        .slider.round { border-radius: 34px; }
-        .slider.round:before { border-radius: 50%; }
-
-        /* --- NOTIFICATIONS --- */
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-
-        .notification-banner {
-            padding: 15px;
-            margin-bottom: 25px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 800;
-            font-size: 1.3em;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            animation: pulse 2s infinite;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
-        }
-
-        .banner-dead { background: #8b0000; color: white; border: 2px solid #ff0000; }
-        .banner-ko { background: #d35400; color: white; border: 2px solid #e67e22; }
-        .banner-penalty { background: #b8860b; color: white; border: 2px solid #ffd700; }
-
-        /* --- UI ELEMENTS --- */
-        .controls-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            background-color: var(--bg-box);
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .controls-row label {
-            color: var(--text-main);
-            margin-right: 15px;
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-
-        .controls-row select {
-            padding: 10px 20px;
-            border-radius: 8px;
-            background: var(--bg-panel);
-            color: var(--accent);
-            border: 2px solid var(--accent);
-            font-size: 1.1em;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .advantages-section {
-            background-color: var(--bg-box);
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 25px;
-        }
-
-        .advantages-section h3 {
-            color: var(--text-main);
-            margin-bottom: 10px;
-            font-size: 1.1em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .checkbox-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .checkbox-label {
-            color: var(--text-sub);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        .checkbox-label input {
-            cursor: pointer;
-            width: 18px;
-            height: 18px;
-            accent-color: var(--accent);
-        }
-        
-        .hit-location {
-            background: var(--bg-box);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border: 2px solid var(--border-color);
-            transition: all 0.3s ease;
-        }
-        
-        .hit-location:hover {
-            border-color: var(--border-hover);
-            transform: translateY(-2px);
-        }
-
-        .hit-location.crippled {
-            border-color: var(--killing-color);
-            background: rgba(211, 47, 47, 0.1);
-        }
-        
-        .location-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .location-name { font-size: 1.4em; font-weight: bold; color: var(--text-main); }
-        .location-number { background: var(--accent); color: var(--btn-text); padding: 5px 15px; border-radius: 20px; font-weight: bold; }
-        
-        .crippled-warning { color: var(--killing-color); font-size: 0.8em; text-transform: uppercase; font-weight: bold; margin-left: 10px; letter-spacing: 1px; }
-        
-        .boxes { display: flex; gap: 8px; flex-wrap: wrap; }
-        
-        .box {
-            width: 35px; height: 35px; border: 2px solid var(--border-color); background: var(--bg-panel);
-            border-radius: 6px; cursor: pointer; transition: all 0.2s ease;
-            display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9em; color: var(--text-main);
-        }
-        
-        .box:hover { transform: scale(1.1); border-color: var(--border-hover); }
-        .box.filled.shock { background: var(--shock-color); border-color: var(--shock-color); color: var(--shock-text); }
-        .box.filled.killing { background: var(--killing-color); border-color: var(--killing-color); color: var(--killing-text); }
-
-        /* --- MODULES (Dice & Healing) --- */
-        .module-card { background: var(--bg-box); border-radius: 15px; padding: 20px; margin-bottom: 25px; border: 1px solid var(--border-color); }
-        .module-card h2, .module-card h3 { color: var(--accent); margin-bottom: 15px; text-align: center; }
-        .input-section { display: flex; gap: 15px; justify-content: center; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
-        .input-section label { color: var(--text-main); font-weight: 600; }
-        .input-section input { width: 70px; padding: 8px; border: 2px solid var(--border-color); background: var(--bg-panel); color: var(--text-main); border-radius: 8px; font-size: 1.1em; text-align: center; font-weight: bold; }
-        
-        .action-btn { background: var(--accent); color: var(--btn-text); padding: 10px 30px; border: none; border-radius: 8px; font-size: 1.1em; font-weight: 700; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; }
-        .action-btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
-        
-        .all-dice { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; }
-        .die { width: 45px; height: 45px; background: var(--bg-panel); border: 2px solid var(--border-color); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: bold; color: var(--text-main); }
-        .die.matched { background: var(--accent); border-color: var(--accent); color: var(--btn-text); transform: scale(1.1); }
-        
-        .matches-section { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; text-align: center; }
-        .match-result { display: inline-block; background: var(--accent); color: var(--btn-text); padding: 8px 15px; border-radius: 8px; margin: 5px; font-weight: bold; }
-        .healing-result { display: inline-block; background: var(--bg-box); border: 2px solid var(--accent); color: var(--text-main); padding: 10px 15px; border-radius: 8px; margin: 5px; font-weight: bold; font-size: 0.95em; }
-
-        /* --- LEGEND & CONTROLS --- */
-        .legend { display: flex; justify-content: center; gap: 30px; margin-top: 20px; padding: 15px; background: var(--bg-box); border: 1px solid var(--border-color); border-radius: 10px; }
-        .legend-item { display: flex; align-items: center; gap: 10px; color: var(--text-main); }
-        .legend-box { width: 25px; height: 25px; border-radius: 4px; border: 2px solid; }
-        .legend-box.shock { background: var(--shock-color); border-color: var(--shock-color); }
-        .legend-box.killing { background: var(--killing-color); border-color: var(--killing-color); }
-        
-        .controls { display: flex; gap: 10px; margin-top: 30px; justify-content: center; }
-        .controls button { padding: 12px 30px; border: none; border-radius: 8px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; }
-        .reset-btn { background: #ff4757; color: white; }
-        .save-btn { background: var(--accent); color: var(--btn-text); }
-        .load-btn { background: #9b7ec4; color: white; }
-        .controls button:hover { transform: translateY(-2px); filter: brightness(1.1); }
-        
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reign: Warcraft Character Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Crimson Text', Georgia, serif; background-color: #0a0a0a; }
+    .app-wrapper { min-height: 100vh; padding: 20px; transition: background 0.5s ease; }
+    .theme-alliance {
+      background: linear-gradient(160deg, #0a1628 0%, #112240 50%, #0a1628 100%);
+      --bg-panel: rgba(10, 25, 50, 0.92); --bg-box: rgba(5, 15, 35, 0.85);
+      --bg-box-solid: #0b1a30; --text-main: #c8d6e5; --text-sub: #6b8299;
+      --text-dim: #3d5570; --border-color: #1a3a5c; --border-hover: #2a6cb0;
+      --accent: #c5a44e; --accent-dim: #8a7535; --btn-text: #0a0f1a;
+      --shock-color: #2a6cb0; --killing-color: #c5a44e;
+      --killing-text: #0a0f1a; --shock-text: #e0e8f0;
+      --danger: #a03030; --danger-light: #c04040;
+      --panel-border: #1e3e66; --ornament: #c5a44e;
+    }
+    .theme-horde {
+      background: linear-gradient(160deg, #120808 0%, #1a0a0a 50%, #120808 100%);
+      --bg-panel: rgba(20, 10, 10, 0.92); --bg-box: rgba(12, 5, 5, 0.85);
+      --bg-box-solid: #1a0e0e; --text-main: #d4c4b0; --text-sub: #8a7a6a;
+      --text-dim: #5a4a3a; --border-color: #3a1a1a; --border-hover: #7a2a2a;
+      --accent: #8a2020; --accent-dim: #5a1515; --btn-text: #f0e0d0;
+      --shock-color: #b08a3a; --killing-color: #8a2020;
+      --killing-text: #f0e0d0; --shock-text: #1a1008;
+      --danger: #a03030; --danger-light: #c04040;
+      --panel-border: #4a1a1a; --ornament: #8a2020;
+    }
+    .container { max-width: 800px; margin: 0 auto; background: var(--bg-panel); border-radius: 4px; padding: 35px 30px; box-shadow: 0 0 80px rgba(0,0,0,0.7), inset 0 0 80px rgba(0,0,0,0.15); border: 1px solid var(--panel-border); position: relative; }
+    .container::before, .container::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); width: 60%; height: 1px; background: linear-gradient(90deg, transparent, var(--ornament), transparent); }
+    .container::before { top: 12px; } .container::after { bottom: 12px; }
+    h1 { text-align: center; color: var(--accent); font-family: 'Cinzel', serif; font-weight: 900; font-size: 2.2em; letter-spacing: 3px; margin-bottom: 2px; }
+    .subtitle { text-align: center; color: var(--text-dim); font-size: 0.85em; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 30px; font-family: 'Cinzel', serif; }
+    h2.section-title { font-family: 'Cinzel', serif; font-weight: 700; color: var(--accent); font-size: 1.1em; letter-spacing: 2px; text-transform: uppercase; text-align: center; margin-bottom: 15px; position: relative; padding-bottom: 8px; }
+    h2.section-title::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 40px; height: 1px; background: var(--accent-dim); }
+    .theme-toggle-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 28px; }
+    .theme-label { font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.85em; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); transition: color 0.3s; }
+    .theme-label.active { color: var(--accent); }
+    .switch { position: relative; display: inline-block; width: 52px; height: 28px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .4s; border-radius: 28px; }
+    .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px; background-color: var(--text-main); transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--accent-dim); }
+    input:checked + .slider:before { transform: translateX(24px); }
+    .char-name-input { width: 100%; text-align: center; padding: 8px; background: transparent; border: none; border-bottom: 1px solid var(--border-color); color: var(--text-main); font-family: 'Cinzel', serif; font-size: 1.5em; font-weight: 700; letter-spacing: 1px; margin-bottom: 25px; outline: none; transition: border-color 0.3s; }
+    .char-name-input:focus { border-bottom-color: var(--accent); }
+    .char-name-input::placeholder { color: var(--text-dim); font-weight: 400; }
+    @keyframes slowPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.85; } }
+    .notification-banner { padding: 12px; margin-bottom: 20px; text-align: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 1em; text-transform: uppercase; letter-spacing: 3px; animation: slowPulse 3s ease-in-out infinite; border: 1px solid; }
+    .banner-dead { background: rgba(120,10,10,0.3); color: #d44; border-color: #611; }
+    .banner-ko { background: rgba(140,80,10,0.2); color: #d89030; border-color: #604020; }
+    .banner-penalty { background: rgba(140,120,10,0.15); color: #c0a030; border-color: #605020; }
+    .xp-row { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 25px; padding: 12px 0; }
+    .xp-label { font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.85em; letter-spacing: 2px; text-transform: uppercase; color: var(--text-sub); }
+    .xp-value { font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.8em; color: var(--accent); min-width: 50px; text-align: center; }
+    .xp-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--bg-box-solid); color: var(--text-main); font-size: 1.3em; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-family: 'Cinzel', serif; line-height: 1; }
+    .xp-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .xp-step { padding: 4px 8px; border-radius: 4px; background: var(--bg-box-solid); border: 1px solid var(--border-color); color: var(--text-sub); font-size: 0.85em; text-align: center; width: 50px; font-family: 'Crimson Text', serif; font-weight: 600; }
+    .xp-step:focus { border-color: var(--accent); outline: none; }
+    .section { margin-bottom: 20px; }
+    .section-header { display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; padding: 10px 0; user-select: none; }
+    .section-header::before, .section-header::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border-color)); }
+    .section-header::after { background: linear-gradient(90deg, var(--border-color), transparent); }
+    .section-header:hover h2.section-title { color: var(--text-main); }
+    .section-header h2.section-title { margin-bottom: 0; padding-bottom: 0; cursor: pointer; white-space: nowrap; }
+    .section-header h2.section-title::after { display: none; }
+    .toggle-arrow { color: var(--text-dim); font-size: 0.7em; transition: transform 0.3s; margin-left: 6px; }
+    .toggle-arrow.open { transform: rotate(180deg); }
+    .section-body { overflow: hidden; transition: max-height 0.4s ease, opacity 0.3s ease; max-height: 0; opacity: 0; }
+    .section-body.open { max-height: 3000px; opacity: 1; }
+    .controls-row { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+    .controls-row label { color: var(--text-sub); font-family: 'Cinzel', serif; font-size: 0.85em; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+    .controls-row select { padding: 8px 16px; border-radius: 4px; background: var(--bg-box-solid); color: var(--text-main); border: 1px solid var(--border-color); font-family: 'Crimson Text', serif; font-size: 1.05em; cursor: pointer; }
+    .controls-row select:focus { border-color: var(--accent); outline: none; }
+    .modifier-row { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-bottom: 20px; }
+    .checkbox-label { color: var(--text-sub); display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 1em; }
+    .checkbox-label input { cursor: pointer; width: 16px; height: 16px; accent-color: var(--accent); }
+    .hit-location { background: var(--bg-box); border-radius: 4px; padding: 16px 18px; margin-bottom: 10px; border: 1px solid var(--border-color); transition: border-color 0.3s ease; }
+    .hit-location:hover { border-color: var(--border-hover); }
+    .hit-location.crippled { border-color: var(--danger); background: rgba(120,20,20,0.08); }
+    .location-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .location-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .location-name { font-family: 'Cinzel', serif; font-size: 1.1em; font-weight: 700; color: var(--text-main); letter-spacing: 1px; }
+    .crippled-warning { color: var(--danger-light); font-size: 0.7em; text-transform: uppercase; font-weight: 700; letter-spacing: 2px; font-family: 'Cinzel', serif; }
+    .location-number { background: var(--bg-box-solid); color: var(--text-sub); border: 1px solid var(--border-color); padding: 3px 12px; border-radius: 3px; font-weight: 700; font-family: 'Cinzel', serif; font-size: 0.85em; }
+    .armor-badge { display: flex; align-items: center; gap: 5px; color: var(--text-dim); font-size: 0.85em; font-family: 'Cinzel', serif; }
+    .armor-badge input { width: 36px; padding: 3px; background: var(--bg-box-solid); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 3px; text-align: center; font-weight: 700; font-family: 'Crimson Text', serif; font-size: 0.95em; }
+    .armor-badge input:focus { border-color: var(--accent); outline: none; }
+    .boxes { display: flex; gap: 6px; flex-wrap: wrap; }
+    .box { width: 32px; height: 32px; border: 1px solid var(--border-color); background: var(--bg-box-solid); border-radius: 3px; cursor: pointer; transition: all 0.15s ease; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8em; color: var(--text-dim); font-family: 'Cinzel', serif; }
+    .box:hover { border-color: var(--border-hover); transform: scale(1.08); }
+    .box.filled.shock { background: var(--shock-color); border-color: var(--shock-color); color: var(--shock-text); }
+    .box.filled.killing { background: var(--killing-color); border-color: var(--killing-color); color: var(--killing-text); }
+    .module-card { background: var(--bg-box); border-radius: 4px; padding: 18px; border: 1px solid var(--border-color); }
+    .dice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    @media (max-width: 600px) { .dice-grid { grid-template-columns: 1fr; } }
+    .input-section { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+    .input-section label { color: var(--text-sub); font-size: 0.9em; }
+    .input-section input { width: 55px; padding: 6px; border: 1px solid var(--border-color); background: var(--bg-box-solid); color: var(--text-main); border-radius: 3px; font-size: 1em; text-align: center; font-weight: 700; font-family: 'Crimson Text', serif; }
+    .input-section input:focus { border-color: var(--accent); outline: none; }
+    .action-btn { background: var(--accent); color: var(--btn-text); padding: 7px 20px; border: none; border-radius: 3px; font-size: 0.85em; font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-family: 'Cinzel', serif; letter-spacing: 1px; }
+    .action-btn:hover { filter: brightness(1.2); }
+    .all-dice { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
+    .die { width: 38px; height: 38px; background: var(--bg-box-solid); border: 1px solid var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 1.3em; font-weight: 700; color: var(--text-main); font-family: 'Cinzel', serif; }
+    .die.matched { background: var(--accent); border-color: var(--accent); color: var(--btn-text); }
+    .matches-section { background: var(--bg-box-solid); border: 1px solid var(--border-color); border-radius: 3px; padding: 10px; text-align: center; }
+    .match-result { display: inline-block; background: var(--accent); color: var(--btn-text); padding: 5px 12px; border-radius: 3px; margin: 3px; font-weight: 700; font-family: 'Cinzel', serif; font-size: 0.9em; }
+    .healing-result { display: inline-block; background: var(--bg-box); border: 1px solid var(--accent-dim); color: var(--text-main); padding: 6px 12px; border-radius: 3px; margin: 3px; font-size: 0.9em; }
+    .no-match { color: var(--text-dim); font-style: italic; }
+    .item-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .item-card { background: var(--bg-box-solid); border: 1px solid var(--border-color); border-radius: 3px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .item-info { flex: 1; } .item-name { font-family: 'Cinzel', serif; font-weight: 700; color: var(--accent); font-size: 1em; letter-spacing: 0.5px; }
+    .item-detail { color: var(--text-sub); font-size: 0.9em; margin-top: 2px; } .item-detail span { margin-right: 14px; }
+    .item-right { display: flex; align-items: center; gap: 8px; }
+    .qty-controls { display: flex; align-items: center; gap: 4px; }
+    .qty-btn { width: 24px; height: 24px; border-radius: 3px; border: 1px solid var(--border-color); background: var(--bg-box); color: var(--text-sub); font-size: 0.9em; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; font-family: 'Cinzel', serif; line-height: 1; padding: 0; }
+    .qty-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .qty-display { min-width: 24px; text-align: center; font-weight: 700; color: var(--text-main); font-family: 'Cinzel', serif; font-size: 0.95em; }
+    .add-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; padding-top: 10px; border-top: 1px solid var(--border-color); }
+    .form-field { display: flex; flex-direction: column; gap: 3px; }
+    .form-field label { color: var(--text-dim); font-size: 0.7em; text-transform: uppercase; letter-spacing: 1px; font-family: 'Cinzel', serif; }
+    .form-field input { padding: 7px 10px; background: var(--bg-box-solid); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 3px; font-size: 0.95em; font-family: 'Crimson Text', serif; }
+    .form-field input:focus { border-color: var(--accent); outline: none; }
+    .remove-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.1em; padding: 2px 6px; transition: color 0.2s; }
+    .remove-btn:hover { color: var(--danger-light); }
+    .add-btn-sm { padding: 7px 14px; border: 1px solid var(--border-color); border-radius: 3px; background: var(--bg-box-solid); color: var(--text-sub); font-weight: 700; cursor: pointer; font-family: 'Cinzel', serif; font-size: 0.8em; letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s; }
+    .add-btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+    .traits-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    @media (max-width: 550px) { .traits-grid { grid-template-columns: 1fr; } }
+    .trait-column h3 { font-family: 'Cinzel', serif; font-weight: 700; color: var(--text-sub); font-size: 0.8em; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+    .trait-column.problems h3 { color: var(--danger); }
+    .trait-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+    .trait-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-box-solid); border: 1px solid var(--border-color); border-radius: 3px; padding: 6px 10px; }
+    .trait-item-text { color: var(--text-main); font-size: 0.95em; flex: 1; }
+    .trait-add-row { display: flex; gap: 6px; }
+    .trait-add-row input { flex: 1; padding: 6px 10px; background: var(--bg-box-solid); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 3px; font-size: 0.9em; font-family: 'Crimson Text', serif; }
+    .trait-add-row input:focus { border-color: var(--accent); outline: none; }
+    .trait-add-btn { background: var(--bg-box-solid); color: var(--text-sub); border: 1px solid var(--border-color); border-radius: 3px; padding: 6px 12px; font-weight: 700; cursor: pointer; font-size: 0.9em; transition: all 0.2s; font-family: 'Cinzel', serif; }
+    .trait-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .legend { display: flex; justify-content: center; gap: 25px; margin-top: 18px; padding: 10px; font-size: 0.9em; }
+    .legend-item { display: flex; align-items: center; gap: 8px; color: var(--text-sub); }
+    .legend-box { width: 20px; height: 20px; border-radius: 3px; }
+    .legend-box.shock { background: var(--shock-color); } .legend-box.killing { background: var(--killing-color); }
+    .controls { display: flex; gap: 10px; margin-top: 25px; justify-content: center; flex-wrap: wrap; }
+    .controls button { padding: 10px 24px; border: 1px solid; border-radius: 3px; font-size: 0.8em; font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-family: 'Cinzel', serif; letter-spacing: 1px; }
+    .controls button:hover { filter: brightness(1.15); }
+    .reset-btn { background: transparent; color: var(--danger-light); border-color: var(--danger); }
+    .reset-btn:hover { background: rgba(160,48,48,0.1); }
+    .reset-all-btn { background: transparent; color: var(--text-dim); border-color: var(--border-color); }
+    .reset-all-btn:hover { background: rgba(255,255,255,0.03); color: var(--text-sub); }
+    .divider { width: 100%; height: 1px; margin: 20px 0; background: linear-gradient(90deg, transparent, var(--border-color), transparent); }
+    .empty-state { text-align: center; color: var(--text-dim); font-style: italic; padding: 12px 0; font-size: 0.95em; }
+  </style>
 </head>
 <body>
-    <div id="root"></div>
+  <div id="root"></div>
+  <script type="text/babel">
+    var defined = React;
+    var useState = defined.useState;
+    var useEffect = defined.useEffect;
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+    var save = function(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} };
+    var load = function(key, fb) { try { var v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : fb; } catch(e) { return fb; } };
 
-        const baseHitboxes = { 'Head': 4, 'Torso': 10, 'Left Arm': 5, 'Right Arm': 5, 'Left Leg': 5, 'Right Leg': 5 };
-        
-        const raceModifiers = {
-            'Human': {},
-            'Dwarf': {},
-            'Night Elf': { 'Head': -1, 'Torso': -1, 'Left Arm': -1, 'Right Arm': -1, 'Left Leg': -1, 'Right Leg': -1 },
-            'Gnome': { 'Head': -1, 'Torso': -1, 'Left Arm': -1, 'Right Arm': -1, 'Left Leg': -1, 'Right Leg': -1 },
-            'Pandaren': {},
-            'Orc': { 'Head': 2, 'Torso': 1, 'Left Arm': 1, 'Right Arm': 1, 'Left Leg': 1, 'Right Leg': 1 },
-            'Goblin': { 'Head': -1, 'Torso': -1, 'Left Arm': -1, 'Right Arm': -1, 'Left Leg': -1, 'Right Leg': -1 },
-            'Tauren': {},
-            'Forsaken': {},
-            'Blood Elf': {}
-        };
+    var rollAndMatch = function(n) {
+      var results = Array(n).fill(0).map(function() { return Math.floor(Math.random() * 10) + 1; });
+      var counts = {};
+      results.forEach(function(d) { counts[d] = (counts[d] || 0) + 1; });
+      var matches = Object.entries(counts)
+        .filter(function(e) { return e[1] >= 2; })
+        .map(function(e) { return { width: e[1], height: parseInt(e[0]) }; })
+        .sort(function(a, b) { return b.width !== a.width ? b.width - a.width : b.height - a.height; });
+      return { results: results, matches: matches };
+    };
 
-        const advantageModifiers = {
-            'Thick Headed': { 'Head': 1 },
-            'Tough': { 'Torso': 1 },
-            'Large': { 'Head': 1, 'Torso': 1, 'Left Arm': 1, 'Right Arm': 1, 'Left Leg': 1, 'Right Leg': 1 },
-            'Leather Hard': { 'Head': 1, 'Torso': 1, 'Left Arm': 1, 'Right Arm': 1, 'Left Leg': 1, 'Right Leg': 1 },
-        };
+    var CROSS = String.fromCharCode(10005);
+    var MINUS = String.fromCharCode(8722);
+    var DARROW = String.fromCharCode(9660);
+    var MDASH = String.fromCharCode(8212);
 
-        const setCookie = (name, value, days = 365) => {
-            const date = new Date();
-            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-            document.cookie = name + "=" + encodeURIComponent(value) + ";expires=" + date.toUTCString() + ";path=/";
-        };
-        const getCookie = (name) => {
-            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-            return match ? decodeURIComponent(match[2]) : null;
-        };
+    var baseHitboxes = { 'Head': 4, 'Torso': 10, 'Left Arm': 5, 'Right Arm': 5, 'Left Leg': 5, 'Right Leg': 5 };
+    var raceModifiers = {
+      'Human': {}, 'Dwarf': {},
+      'Night Elf': { 'Head': -1, 'Torso': -1, 'Left Arm': -1, 'Right Arm': -1, 'Left Leg': -1, 'Right Leg': -1 },
+      'Gnome': { 'Head': -1, 'Torso': -1, 'Left Arm': -1, 'Right Arm': -1, 'Left Leg': -1, 'Right Leg': -1 },
+      'Pandaren': {},
+      'Orc': { 'Head': 2, 'Torso': 1, 'Left Arm': 1, 'Right Arm': 1, 'Left Leg': 1, 'Right Leg': 1 },
+      'Goblin': { 'Head': -1, 'Torso': -1, 'Left Arm': -1, 'Right Arm': -1, 'Left Leg': -1, 'Right Leg': -1 },
+      'Tauren': {}, 'Forsaken': {}, 'Blood Elf': {}
+    };
+    var advantageModifiers = {
+      'Thick Headed': { 'Head': 1 }, 'Tough': { 'Torso': 1 },
+      'Large': { 'Head': 1, 'Torso': 1, 'Left Arm': 1, 'Right Arm': 1, 'Left Leg': 1, 'Right Leg': 1 },
+      'Leather Hard': { 'Head': 1, 'Torso': 1, 'Left Arm': 1, 'Right Arm': 1, 'Left Leg': 1, 'Right Leg': 1 }
+    };
+    var locationOrder = ['Head', 'Torso', 'Left Arm', 'Right Arm', 'Left Leg', 'Right Leg'];
 
-        // --- COMPONENTS ---
+    var CollapsibleSection = function(props) {
+      var res = useState(function() { return load('reign_section_' + props.id, props.defaultOpen !== false); });
+      var open = res[0]; var setOpen = res[1];
+      useEffect(function() { save('reign_section_' + props.id, open); }, [open, props.id]);
+      return React.createElement('div', {className: 'section'},
+        React.createElement('div', {className: 'section-header', onClick: function() { setOpen(!open); }},
+          React.createElement('h2', {className: 'section-title'},
+            props.title, ' ', React.createElement('span', {className: 'toggle-arrow' + (open ? ' open' : '')}, DARROW)
+          )
+        ),
+        React.createElement('div', {className: 'section-body' + (open ? ' open' : '')}, props.children)
+      );
+    };
 
-        const DiceRoller = () => {
-            const [numDice, setNumDice] = useState(5);
-            const [diceResults, setDiceResults] = useState([]);
-            const [matches, setMatches] = useState([]);
+    var DiceRoller = function(props) {
+      var s1 = useState(props.healingMode ? 3 : 5); var numDice = s1[0]; var setNumDice = s1[1];
+      var s2 = useState(null); var roll = s2[0]; var setRoll = s2[1];
+      return React.createElement('div', {className: 'module-card'},
+        React.createElement('h2', {className: 'section-title', style: {fontSize: '0.95em', marginBottom: '10px'}}, props.label),
+        React.createElement('div', {className: 'input-section'},
+          React.createElement('label', null, 'Dice:'),
+          React.createElement('input', {type: 'number', min: '1', max: '20', value: numDice, onChange: function(e) { setNumDice(Math.max(1, parseInt(e.target.value) || 1)); }}),
+          React.createElement('button', {className: 'action-btn', onClick: function() { setRoll(rollAndMatch(numDice)); }}, 'Roll')
+        ),
+        roll ? React.createElement('div', null,
+          React.createElement('div', {className: 'all-dice'},
+            roll.results.map(function(d, i) {
+              return React.createElement('div', {key: i, className: 'die' + (roll.matches.some(function(m) { return m.height === d; }) ? ' matched' : '')}, d);
+            })
+          ),
+          React.createElement('div', {className: 'matches-section'},
+            roll.matches.length > 0
+              ? roll.matches.map(function(m, i) {
+                  return props.healingMode
+                    ? React.createElement('span', {key: i, className: 'healing-result'}, 'Set ' + m.width + 'x' + m.height + ' ' + MDASH + ' Heals ' + m.width + ' Shock or converts 1 Killing to Shocking')
+                    : React.createElement('span', {key: i, className: 'match-result'}, m.width + 'x' + m.height);
+                })
+              : React.createElement('span', {className: 'no-match'}, props.healingMode ? 'No healing sets' : 'No matches')
+          )
+        ) : null
+      );
+    };
 
-            const rollDice = () => {
-                const results = Array(numDice).fill(0).map(() => Math.floor(Math.random() * 10) + 1);
-                setDiceResults(results);
-                const counts = {};
-                results.forEach(die => { counts[die] = (counts[die] || 0) + 1; });
-                const foundMatches = Object.entries(counts)
-                    .filter(([_, count]) => count >= 2)
-                    .map(([number, count]) => ({ count, number: parseInt(number), display: `${count}x${number}` }))
-                    .sort((a, b) => b.count !== a.count ? b.count - a.count : b.number - a.number);
-                setMatches(foundMatches);
-            };
-
-            return (
-                <div className="module-card">
-                    <h2>🎲 Dice Roller 🎲 </h2>
-                    <div className="input-section">
-                        <label>Number of Dice:</label>
-                        <input type="number" min="1" max="20" value={numDice} onChange={(e) => setNumDice(Math.max(1, parseInt(e.target.value) || 1))} />
-                        <button className="action-btn" onClick={rollDice}>Roll</button>
-                    </div>
-                    {diceResults.length > 0 && (
-                        <div>
-                            <div className="all-dice">
-                                {diceResults.map((die, idx) => (
-                                    <div key={idx} className={`die ${matches.some(m => m.number === die) ? 'matched' : ''}`}>{die}</div>
-                                ))}
-                            </div>
-                            <div className="matches-section">
-                                {matches.length > 0 ? matches.map((m, i) => <span key={i} className="match-result">{m.display}</span>) : <span>No matches</span>}
-                            </div>
-                        </div>
-                    )}
-                </div>
+    var HitLocation = function(props) {
+      var isCrippled = props.wounds.length > 0 && props.wounds.every(function(w) { return w === 'killing'; });
+      var handleBoxClick = function(i) {
+        var nw = props.wounds.slice();
+        if (!nw[i]) nw[i] = 'shock';
+        else if (nw[i] === 'shock') nw[i] = 'killing';
+        else nw[i] = null;
+        props.onWoundChange(props.name, nw);
+      };
+      return React.createElement('div', {className: 'hit-location' + (isCrippled ? ' crippled' : '')},
+        React.createElement('div', {className: 'location-header'},
+          React.createElement('div', {className: 'location-left'},
+            React.createElement('span', {className: 'location-name'}, props.name),
+            isCrippled ? React.createElement('span', {className: 'crippled-warning'}, 'Crippled') : null,
+            React.createElement('div', {className: 'armor-badge'},
+              'AR',
+              React.createElement('input', {type: 'number', min: '0', max: '20', value: props.armor, onChange: function(e) { props.onArmorChange(props.name, Math.max(0, parseInt(e.target.value) || 0)); }})
+            )
+          ),
+          React.createElement('div', {className: 'location-number'}, props.number)
+        ),
+        React.createElement('div', {className: 'boxes'},
+          props.wounds.map(function(ws, i) {
+            return React.createElement('div', {key: i, className: 'box' + (ws ? ' filled ' + ws : ''), onClick: function() { handleBoxClick(i); }},
+              ws === 'shock' ? 'S' : ws === 'killing' ? 'K' : ''
             );
+          })
+        )
+      );
+    };
+
+    var WeaponManager = function(props) {
+      var s = useState({name: '', damage: '', notes: ''}); var form = s[0]; var setForm = s[1];
+      var add = function() {
+        if (!form.name.trim()) return;
+        props.onChange(props.weapons.concat([{id: Date.now(), name: form.name, damage: form.damage, notes: form.notes}]));
+        setForm({name: '', damage: '', notes: ''});
+      };
+      var handleKey = function(e) { if (e.key === 'Enter') add(); };
+      return React.createElement('div', null,
+        props.weapons.length > 0
+          ? React.createElement('div', {className: 'item-list'},
+              props.weapons.map(function(w) {
+                return React.createElement('div', {key: w.id, className: 'item-card'},
+                  React.createElement('div', {className: 'item-info'},
+                    React.createElement('div', {className: 'item-name'}, w.name),
+                    React.createElement('div', {className: 'item-detail'},
+                      w.damage ? React.createElement('span', null, w.damage) : null,
+                      w.notes ? React.createElement('span', null, w.notes) : null
+                    )
+                  ),
+                  React.createElement('button', {className: 'remove-btn', onClick: function() { props.onChange(props.weapons.filter(function(x) { return x.id !== w.id; })); }}, CROSS)
+                );
+              })
+            )
+          : React.createElement('div', {className: 'empty-state'}, 'No weapons added'),
+        React.createElement('div', {className: 'add-form'},
+          React.createElement('div', {className: 'form-field', style: {flex: '1 1 100px'}},
+            React.createElement('label', null, 'Name'),
+            React.createElement('input', {value: form.name, onChange: function(e) { setForm({name: e.target.value, damage: form.damage, notes: form.notes}); }, onKeyDown: handleKey, placeholder: 'Ashkandi'})
+          ),
+          React.createElement('div', {className: 'form-field', style: {flex: '1 1 100px'}},
+            React.createElement('label', null, 'Damage'),
+            React.createElement('input', {value: form.damage, onChange: function(e) { setForm({name: form.name, damage: e.target.value, notes: form.notes}); }, onKeyDown: handleKey, placeholder: 'W+1 Killing'})
+          ),
+          React.createElement('div', {className: 'form-field', style: {flex: '1 1 130px'}},
+            React.createElement('label', null, 'Notes'),
+            React.createElement('input', {value: form.notes, onChange: function(e) { setForm({name: form.name, damage: form.damage, notes: e.target.value}); }, onKeyDown: handleKey, placeholder: 'Two-handed, Slow'})
+          ),
+          React.createElement('button', {className: 'add-btn-sm', onClick: add, style: {alignSelf: 'flex-end', marginBottom: '1px'}}, 'Add')
+        )
+      );
+    };
+
+    var InventoryManager = function(props) {
+      var s = useState({name: '', qty: '1', notes: ''}); var form = s[0]; var setForm = s[1];
+      var add = function() {
+        if (!form.name.trim()) return;
+        props.onChange(props.inventory.concat([{id: Date.now(), name: form.name, qty: Math.max(1, parseInt(form.qty) || 1), notes: form.notes}]));
+        setForm({name: '', qty: '1', notes: ''});
+      };
+      var handleKey = function(e) { if (e.key === 'Enter') add(); };
+      var updateQty = function(id, delta) {
+        props.onChange(props.inventory.map(function(item) {
+          if (item.id !== id) return item;
+          var nq = (item.qty || 1) + delta;
+          if (nq < 1) return null;
+          return {id: item.id, name: item.name, qty: nq, notes: item.notes};
+        }).filter(Boolean));
+      };
+      return React.createElement('div', null,
+        props.inventory.length > 0
+          ? React.createElement('div', {className: 'item-list'},
+              props.inventory.map(function(item) {
+                return React.createElement('div', {key: item.id, className: 'item-card'},
+                  React.createElement('div', {className: 'item-info'},
+                    React.createElement('div', {className: 'item-name'}, item.name),
+                    item.notes ? React.createElement('div', {className: 'item-detail'}, React.createElement('span', null, item.notes)) : null
+                  ),
+                  React.createElement('div', {className: 'item-right'},
+                    React.createElement('div', {className: 'qty-controls'},
+                      React.createElement('button', {className: 'qty-btn', onClick: function() { updateQty(item.id, -1); }}, MINUS),
+                      React.createElement('span', {className: 'qty-display'}, item.qty || 1),
+                      React.createElement('button', {className: 'qty-btn', onClick: function() { updateQty(item.id, 1); }}, '+')
+                    ),
+                    React.createElement('button', {className: 'remove-btn', onClick: function() { props.onChange(props.inventory.filter(function(x) { return x.id !== item.id; })); }}, CROSS)
+                  )
+                );
+              })
+            )
+          : React.createElement('div', {className: 'empty-state'}, 'No items in inventory'),
+        React.createElement('div', {className: 'add-form'},
+          React.createElement('div', {className: 'form-field', style: {flex: '1 1 130px'}},
+            React.createElement('label', null, 'Item'),
+            React.createElement('input', {value: form.name, onChange: function(e) { setForm({name: e.target.value, qty: form.qty, notes: form.notes}); }, onKeyDown: handleKey, placeholder: 'Healing Potion'})
+          ),
+          React.createElement('div', {className: 'form-field', style: {flex: '0 0 60px'}},
+            React.createElement('label', null, 'Qty'),
+            React.createElement('input', {value: form.qty, onChange: function(e) { setForm({name: form.name, qty: e.target.value, notes: form.notes}); }, onKeyDown: handleKey, style: {textAlign: 'center'}})
+          ),
+          React.createElement('div', {className: 'form-field', style: {flex: '1 1 130px'}},
+            React.createElement('label', null, 'Notes'),
+            React.createElement('input', {value: form.notes, onChange: function(e) { setForm({name: form.name, qty: form.qty, notes: e.target.value}); }, onKeyDown: handleKey, placeholder: 'Restores 3 Shock'})
+          ),
+          React.createElement('button', {className: 'add-btn-sm', onClick: add, style: {alignSelf: 'flex-end', marginBottom: '1px'}}, 'Add')
+        )
+      );
+    };
+
+    var TraitList = function(props) {
+      var s = useState(''); var input = s[0]; var setInput = s[1];
+      var add = function() {
+        if (!input.trim()) return;
+        props.onChange(props.items.concat([{id: Date.now(), text: input.trim()}]));
+        setInput('');
+      };
+      var handleKey = function(e) { if (e.key === 'Enter') add(); };
+      return React.createElement('div', {className: 'trait-column' + (props.isProblems ? ' problems' : '')},
+        React.createElement('h3', null, props.title),
+        props.items.length > 0
+          ? React.createElement('div', {className: 'trait-list'},
+              props.items.map(function(item) {
+                return React.createElement('div', {key: item.id, className: 'trait-item'},
+                  React.createElement('span', {className: 'trait-item-text'}, item.text),
+                  React.createElement('button', {className: 'remove-btn', style: {fontSize: '0.9em'}, onClick: function() { props.onChange(props.items.filter(function(x) { return x.id !== item.id; })); }}, CROSS)
+                );
+              })
+            )
+          : null,
+        React.createElement('div', {className: 'trait-add-row'},
+          React.createElement('input', {value: input, onChange: function(e) { setInput(e.target.value); }, onKeyDown: handleKey, placeholder: props.isProblems ? 'Add a problem...' : 'Add an advantage...'}),
+          React.createElement('button', {className: 'trait-add-btn', onClick: add}, '+')
+        )
+      );
+    };
+
+    var App = function() {
+      var s0 = useState(function() { return load('reign_theme', 'alliance'); }); var theme = s0[0]; var setTheme = s0[1];
+      var s1 = useState(function() { var v = load('reign_charName', ''); return typeof v === 'string' ? v : ''; }); var charName = s1[0]; var setCharName = s1[1];
+      var s2 = useState(function() { var v = load('reign_race', 'Human'); return typeof v === 'string' && raceModifiers[v] ? v : 'Human'; }); var selectedRace = s2[0]; var setSelectedRace = s2[1];
+      var s3 = useState(function() { var v = load('reign_physAdvantages', []); return Array.isArray(v) ? v : []; }); var selectedAdvantages = s3[0]; var setSelectedAdvantages = s3[1];
+      var s4 = useState(function() { var v = load('reign_xp', 0); return typeof v === 'number' ? v : 0; }); var xp = s4[0]; var setXP = s4[1];
+      var s5 = useState(1); var xpStep = s5[0]; var setXpStep = s5[1];
+      var s6 = useState(function() { var v = load('reign_weapons', []); return Array.isArray(v) ? v : []; }); var weapons = s6[0]; var setWeapons = s6[1];
+      var s7 = useState(function() { var v = load('reign_inventory', []); return Array.isArray(v) ? v : []; }); var inventory = s7[0]; var setInventory = s7[1];
+      var s8 = useState(function() { var v = load('reign_advantages', []); return Array.isArray(v) ? v : []; }); var advantages = s8[0]; var setAdvantages = s8[1];
+      var s9 = useState(function() { var v = load('reign_problems', []); return Array.isArray(v) ? v : []; }); var problems = s9[0]; var setProblems = s9[1];
+      var s10 = useState(function() {
+        var v = load('reign_armor', null);
+        return (v && typeof v === 'object' && !Array.isArray(v)) ? v : {'Head':0,'Torso':0,'Left Arm':0,'Right Arm':0,'Left Leg':0,'Right Leg':0};
+      }); var armor = s10[0]; var setArmor = s10[1];
+
+      var getTargetBoxes = function(loc, race, advs) {
+        var raceMod = raceModifiers[race] ? (raceModifiers[race][loc] || 0) : 0;
+        var advMod = advs.reduce(function(sum, a) { return sum + ((advantageModifiers[a] && advantageModifiers[a][loc]) || 0); }, 0);
+        return Math.max(1, baseHitboxes[loc] + raceMod + advMod);
+      };
+
+      var getInitialHitLocations = function(race, advs) {
+        race = race || 'Human'; advs = advs || [];
+        return {
+          'Head': {number: '10', wounds: Array(getTargetBoxes('Head', race, advs)).fill(null)},
+          'Torso': {number: '7-9', wounds: Array(getTargetBoxes('Torso', race, advs)).fill(null)},
+          'Left Arm': {number: '5-6', wounds: Array(getTargetBoxes('Left Arm', race, advs)).fill(null)},
+          'Right Arm': {number: '3-4', wounds: Array(getTargetBoxes('Right Arm', race, advs)).fill(null)},
+          'Left Leg': {number: '2', wounds: Array(getTargetBoxes('Left Leg', race, advs)).fill(null)},
+          'Right Leg': {number: '1', wounds: Array(getTargetBoxes('Right Leg', race, advs)).fill(null)}
         };
+      };
 
-        const HealingRoller = () => {
-            const [numDice, setNumDice] = useState(3);
-            const [diceResults, setDiceResults] = useState([]);
-            const [matches, setMatches] = useState([]);
+      var s11 = useState(function() {
+        var v = load('reign_wounds', null);
+        if (v && typeof v === 'object' && v['Head'] && v['Torso']) return v;
+        return getInitialHitLocations(selectedRace, selectedAdvantages);
+      }); var hitLocations = s11[0]; var setHitLocations = s11[1];
 
-            const rollHealing = () => {
-                const results = Array(numDice).fill(0).map(() => Math.floor(Math.random() * 10) + 1);
-                setDiceResults(results);
-                const counts = {};
-                results.forEach(die => { counts[die] = (counts[die] || 0) + 1; });
-                
-                const foundMatches = Object.entries(counts)
-                    .filter(([_, count]) => count >= 2)
-                    .map(([number, count]) => ({ width: count, height: parseInt(number) }))
-                    .sort((a, b) => b.width !== a.width ? b.width - a.width : b.height - a.height);
-                setMatches(foundMatches);
-            };
+      useEffect(function() { save('reign_theme', theme); }, [theme]);
+      useEffect(function() { save('reign_charName', charName); }, [charName]);
+      useEffect(function() { save('reign_race', selectedRace); }, [selectedRace]);
+      useEffect(function() { save('reign_physAdvantages', selectedAdvantages); }, [selectedAdvantages]);
+      useEffect(function() { save('reign_wounds', hitLocations); }, [hitLocations]);
+      useEffect(function() { save('reign_armor', armor); }, [armor]);
+      useEffect(function() { save('reign_xp', xp); }, [xp]);
+      useEffect(function() { save('reign_weapons', weapons); }, [weapons]);
+      useEffect(function() { save('reign_inventory', inventory); }, [inventory]);
+      useEffect(function() { save('reign_advantages', advantages); }, [advantages]);
+      useEffect(function() { save('reign_problems', problems); }, [problems]);
 
-            return (
-                <div className="module-card">
-                    <h2>🩹 Healing Roll 🩹</h2>
-                    <div className="input-section">
-                        <label>Dice Pool (Body + Vigor):</label>
-                        <input type="number" min="1" max="20" value={numDice} onChange={(e) => setNumDice(Math.max(1, parseInt(e.target.value) || 1))} />
-                        <button className="action-btn" onClick={rollHealing}>Roll</button>
-                    </div>
-                    {diceResults.length > 0 && (
-                        <div>
-                            <div className="all-dice" style={{marginBottom: '10px'}}>
-                                {diceResults.map((die, idx) => (
-                                    <div key={idx} className={`die ${matches.some(m => m.height === die) ? 'matched' : ''}`} style={{width: '35px', height: '35px', fontSize: '1.2em'}}>{die}</div>
-                                ))}
-                            </div>
-                            <div className="matches-section">
-                                {matches.length > 0 ? matches.map((m, i) => (
-                                    <span key={i} className="healing-result">
-                                        Set {m.width}x{m.height}: Heals {m.width} Shock OR Convert 1 Killing to Shocking
-                                    </span>
-                                )) : <span>No successful healing sets</span>}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
+      var headWounds = hitLocations['Head'] ? hitLocations['Head'].wounds : [];
+      var torsoWounds = hitLocations['Torso'] ? hitLocations['Torso'].wounds : [];
+      var isAllKilling = function(arr) { return arr.length > 0 && arr.every(function(w) { return w === 'killing'; }); };
+      var isFull = function(arr) { return arr.length > 0 && arr.every(function(w) { return w !== null; }); };
+      var isDead = isAllKilling(headWounds) || isAllKilling(torsoWounds);
+      var isKnockedOut = !isDead && isFull(headWounds);
+      var hasPenalty = !isDead && !isKnockedOut && isFull(torsoWounds);
 
-        const HitLocation = ({ name, number, wounds, onWoundChange }) => {
-            const isCrippled = wounds.length > 0 && wounds.every(w => w === 'killing');
-            const handleBoxClick = (index) => {
-                const newWounds = [...wounds];
-                if (!newWounds[index]) newWounds[index] = 'shock';
-                else if (newWounds[index] === 'shock') newWounds[index] = 'killing';
-                else newWounds[index] = null;
-                onWoundChange(name, newWounds);
-            };
-            
-            return (
-                <div className={`hit-location ${isCrippled ? 'crippled' : ''}`}>
-                    <div className="location-header">
-                        <div className="location-name">
-                            {name} {isCrippled && <span className="crippled-warning">Crippled</span>}
-                        </div>
-                        <div className="location-number">{number}</div>
-                    </div>
-                    <div className="boxes">
-                        {wounds.map((ws, i) => (
-                            <div key={i} className={`box ${ws ? `filled ${ws}` : ''}`} onClick={() => handleBoxClick(i)}>
-                                {ws === 'shock' ? 'S' : ws === 'killing' ? 'K' : ''}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
+      var updateHitboxArrays = function(newRace, newAdvs) {
+        setHitLocations(function(prev) {
+          var updated = {};
+          Object.keys(prev).forEach(function(loc) {
+            var target = getTargetBoxes(loc, newRace, newAdvs);
+            var current = (prev[loc] && prev[loc].wounds) ? prev[loc].wounds : [];
+            var nw;
+            if (current.length < target) nw = current.concat(Array(target - current.length).fill(null));
+            else if (current.length > target) nw = current.slice(0, target);
+            else nw = current;
+            updated[loc] = {number: prev[loc].number, wounds: nw};
+          });
+          return updated;
+        });
+      };
 
-        const App = () => {
-            const [theme, setTheme] = useState(() => getCookie('oreTheme') || 'alliance');
-            const [selectedRace, setSelectedRace] = useState(() => getCookie('selectedRace') || 'Human');
-            const [selectedAdvantages, setSelectedAdvantages] = useState(() => {
-                try { return JSON.parse(getCookie('selectedAdvantages')) || []; } 
-                catch (e) { return []; }
-            });
-            
-            const getTargetBoxes = (loc, race, advs) => {
-                const raceMod = raceModifiers[race]?.[loc] || 0;
-                const advMod = advs.reduce((sum, a) => sum + (advantageModifiers[a]?.[loc] || 0), 0);
-                return Math.max(1, baseHitboxes[loc] + raceMod + advMod);
-            };
+      var handleRaceChange = function(e) { var r = e.target.value; setSelectedRace(r); updateHitboxArrays(r, selectedAdvantages); };
+      var handleAdvantageToggle = function(adv) {
+        var na = selectedAdvantages.indexOf(adv) >= 0 ? selectedAdvantages.filter(function(a) { return a !== adv; }) : selectedAdvantages.concat([adv]);
+        setSelectedAdvantages(na); updateHitboxArrays(selectedRace, na);
+      };
 
-            const getInitialHitLocations = (race = 'Human', advs = []) => {
-                return {
-                    'Head': { number: '10', wounds: Array(getTargetBoxes('Head', race, advs)).fill(null) },
-                    'Torso': { number: '7-9', wounds: Array(getTargetBoxes('Torso', race, advs)).fill(null) },
-                    'Left Arm': { number: '5-6', wounds: Array(getTargetBoxes('Left Arm', race, advs)).fill(null) },
-                    'Right Arm': { number: '3-4', wounds: Array(getTargetBoxes('Right Arm', race, advs)).fill(null) },
-                    'Left Leg': { number: '2', wounds: Array(getTargetBoxes('Left Leg', race, advs)).fill(null) },
-                    'Right Leg': { number: '1', wounds: Array(getTargetBoxes('Right Leg', race, advs)).fill(null) }
-                };
-            };
+      return React.createElement('div', {className: 'app-wrapper theme-' + theme},
+        React.createElement('div', {className: 'container'},
+          React.createElement('h1', null, 'Reign: Warcraft'),
+          React.createElement('div', {className: 'subtitle'}, 'Character Tracker'),
 
-            const [hitLocations, setHitLocations] = useState(() => {
-                try {
-                    const saved = getCookie('reignWounds');
-                    if (saved) return JSON.parse(saved);
-                } catch (e) { console.error('Error loading:', e); }
-                return getInitialHitLocations(selectedRace, selectedAdvantages);
-            });
+          React.createElement('div', {className: 'theme-toggle-container'},
+            React.createElement('span', {className: 'theme-label' + (theme === 'alliance' ? ' active' : '')}, 'Alliance'),
+            React.createElement('label', {className: 'switch'},
+              React.createElement('input', {type: 'checkbox', checked: theme === 'horde', onChange: function() { setTheme(theme === 'alliance' ? 'horde' : 'alliance'); }}),
+              React.createElement('span', {className: 'slider'})
+            ),
+            React.createElement('span', {className: 'theme-label' + (theme === 'horde' ? ' active' : '')}, 'Horde')
+          ),
 
-            useEffect(() => {
-                setCookie('reignWounds', JSON.stringify(hitLocations));
-                setCookie('selectedRace', selectedRace);
-                setCookie('selectedAdvantages', JSON.stringify(selectedAdvantages));
-                setCookie('oreTheme', theme);
-            }, [hitLocations, selectedRace, selectedAdvantages, theme]);
+          React.createElement('input', {className: 'char-name-input', type: 'text', value: charName, onChange: function(e) { setCharName(e.target.value); }, placeholder: 'Character Name'}),
 
-            // STATUS LOGIC
-            const headWounds = hitLocations['Head']?.wounds || [];
-            const torsoWounds = hitLocations['Torso']?.wounds || [];
-            const isFull = (arr) => arr.length > 0 && arr.every(w => w !== null);
-            const isAllKilling = (arr) => arr.length > 0 && arr.every(w => w === 'killing');
-            const isDead = isAllKilling(headWounds) || isAllKilling(torsoWounds);
-            const isKnockedOut = !isDead && isFull(headWounds); 
-            const hasPenalty = !isDead && !isKnockedOut && isFull(torsoWounds);
+          isDead ? React.createElement('div', {className: 'notification-banner banner-dead'}, 'Dead') : null,
+          isKnockedOut ? React.createElement('div', {className: 'notification-banner banner-ko'}, 'Knocked Out') : null,
+          hasPenalty ? React.createElement('div', {className: 'notification-banner banner-penalty'}, 'Dazed ' + MDASH + ' 1d Penalty') : null,
 
-            const updateHitboxArrays = (newRace, newAdvs) => {
-                setHitLocations(prev => {
-                    const updated = { ...prev };
-                    Object.keys(updated).forEach(loc => {
-                        const target = getTargetBoxes(loc, newRace, newAdvs);
-                        const current = updated[loc].wounds || [];
-                        if (current.length < target) {
-                            updated[loc].wounds = [...current, ...Array(target - current.length).fill(null)];
-                        } else if (current.length > target) {
-                            updated[loc].wounds = current.slice(0, target);
-                        }
-                    });
-                    return updated;
-                });
-            };
+          React.createElement('div', {className: 'xp-row'},
+            React.createElement('span', {className: 'xp-label'}, 'Experience'),
+            React.createElement('button', {className: 'xp-btn', onClick: function() { setXP(Math.max(0, xp - xpStep)); }}, MINUS),
+            React.createElement('span', {className: 'xp-value'}, xp),
+            React.createElement('button', {className: 'xp-btn', onClick: function() { setXP(xp + xpStep); }}, '+'),
+            React.createElement('input', {className: 'xp-step', type: 'number', min: '1', value: xpStep, onChange: function(e) { setXpStep(Math.max(1, parseInt(e.target.value) || 1)); }, title: 'Step amount'})
+          ),
 
-            const handleRaceChange = (e) => {
-                const newRace = e.target.value;
-                setSelectedRace(newRace);
-                updateHitboxArrays(newRace, selectedAdvantages);
-            };
+          React.createElement('div', {className: 'divider'}),
 
-            const handleAdvantageToggle = (adv) => {
-                const newAdvs = selectedAdvantages.includes(adv) 
-                    ? selectedAdvantages.filter(a => a !== adv)
-                    : [...selectedAdvantages, adv];
-                
-                setSelectedAdvantages(newAdvs);
-                updateHitboxArrays(selectedRace, newAdvs);
-            };
+          React.createElement(CollapsibleSection, {title: 'Dice', id: 'dice', defaultOpen: true},
+            React.createElement('div', {className: 'dice-grid'},
+              React.createElement(DiceRoller, {label: 'Roll', healingMode: false}),
+              React.createElement(DiceRoller, {label: 'Healing', healingMode: true})
+            )
+          ),
 
-            return (
-                <div className={`app-wrapper theme-${theme}`}>
-                    <div className="container">
-                        <h1>Reign: Warcraft</h1>
-                        <div className="subtitle">Wound Tracker</div>
+          React.createElement(CollapsibleSection, {title: 'Race & Modifiers', id: 'race', defaultOpen: true},
+            React.createElement('div', {className: 'controls-row'},
+              React.createElement('label', null, 'Race'),
+              React.createElement('select', {value: selectedRace, onChange: handleRaceChange},
+                Object.keys(raceModifiers).map(function(r) { return React.createElement('option', {key: r, value: r}, r); })
+              )
+            ),
+            React.createElement('div', {className: 'modifier-row'},
+              Object.keys(advantageModifiers).map(function(adv) {
+                return React.createElement('label', {key: adv, className: 'checkbox-label'},
+                  React.createElement('input', {type: 'checkbox', checked: selectedAdvantages.indexOf(adv) >= 0, onChange: function() { handleAdvantageToggle(adv); }}),
+                  adv
+                );
+              })
+            )
+          ),
 
-                        <div className="theme-toggle-container">
-                            <span className={`theme-label ${theme === 'alliance' ? 'active' : ''}`}>Alliance</span>
-                            <label className="switch">
-                                <input type="checkbox" checked={theme === 'horde'} onChange={() => setTheme(theme === 'alliance' ? 'horde' : 'alliance')} />
-                                <span className="slider round"></span>
-                            </label>
-                            <span className={`theme-label ${theme === 'horde' ? 'active' : ''}`}>Horde</span>
-                        </div>
+          React.createElement(CollapsibleSection, {title: 'Wound Tracker', id: 'wounds', defaultOpen: true},
+            locationOrder.map(function(name) {
+              return React.createElement(HitLocation, {
+                key: name, name: name,
+                number: hitLocations[name].number,
+                wounds: hitLocations[name].wounds,
+                armor: (armor && armor[name]) || 0,
+                onWoundChange: function(loc, w) {
+                  setHitLocations(function(p) {
+                    var u = {}; Object.keys(p).forEach(function(k) { u[k] = k === loc ? {number: p[k].number, wounds: w} : p[k]; }); return u;
+                  });
+                },
+                onArmorChange: function(loc, v) {
+                  setArmor(function(p) { var u = {}; Object.keys(p).forEach(function(k) { u[k] = p[k]; }); u[loc] = v; return u; });
+                }
+              });
+            }),
+            React.createElement('div', {className: 'legend'},
+              React.createElement('div', {className: 'legend-item'}, React.createElement('div', {className: 'legend-box shock'}), React.createElement('span', null, 'Shock')),
+              React.createElement('div', {className: 'legend-item'}, React.createElement('div', {className: 'legend-box killing'}), React.createElement('span', null, 'Killing'))
+            )
+          ),
 
-                        {/* STATUS BANNERS */}
-                        {isDead && <div className="notification-banner banner-dead">☠️ Status: DEAD ☠️</div>}
-                        {isKnockedOut && <div className="notification-banner banner-ko">💫 Status: KNOCKED OUT 💫</div>}
-                        {hasPenalty && <div className="notification-banner banner-penalty">⚠️ Status: DAZED (-1d Penalty) ⚠️</div>}
+          React.createElement(CollapsibleSection, {title: 'Weapons', id: 'weapons', defaultOpen: false},
+            React.createElement(WeaponManager, {weapons: weapons, onChange: setWeapons})
+          ),
 
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-                            <DiceRoller />
-                            <HealingRoller />
-                        </div>
+          React.createElement(CollapsibleSection, {title: 'Inventory', id: 'inventory', defaultOpen: false},
+            React.createElement(InventoryManager, {inventory: inventory, onChange: setInventory})
+          ),
 
-                        <div className="controls-row">
-                            <label>Character Race:</label>
-                            <select value={selectedRace} onChange={handleRaceChange}>
-                                {Object.keys(raceModifiers).map(r => <option key={r} value={r}>{r}</option>)}
-                            </select>
-                        </div>
+          React.createElement(CollapsibleSection, {title: 'Advantages & Problems', id: 'traits', defaultOpen: false},
+            React.createElement('div', {className: 'traits-grid'},
+              React.createElement(TraitList, {title: 'Advantages', items: advantages, onChange: setAdvantages, isProblems: false}),
+              React.createElement(TraitList, {title: 'Problems', items: problems, onChange: setProblems, isProblems: true})
+            )
+          ),
 
-                        <div className="advantages-section">
-                            <h3>Physical Advantages</h3>
-                            <div className="checkbox-group">
-                                {Object.keys(advantageModifiers).map(adv => (
-                                    <label key={adv} className="checkbox-label">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={selectedAdvantages.includes(adv)}
-                                            onChange={() => handleAdvantageToggle(adv)}
-                                        />
-                                        {adv}
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-                        
-                        {Object.entries(hitLocations).map(([name, data]) => (
-                            <HitLocation key={name} name={name} number={data.number} wounds={data.wounds} 
-                                onWoundChange={(loc, w) => setHitLocations(p => ({...p, [loc]: {...p[loc], wounds: w}}))} 
-                            />
-                        ))}
-                        
-                        <div className="legend">
-                            <div className="legend-item"><div className="legend-box shock"></div><span>Shock Damage</span></div>
-                            <div className="legend-item"><div className="legend-box killing"></div><span>Killing Damage</span></div>
-                        </div>
-                        
-                        <div className="controls">
-                            <button className="reset-btn" onClick={() => { if(window.confirm('Clear all wounds?')) setHitLocations(getInitialHitLocations(selectedRace, selectedAdvantages)) }}>Clear All</button>
-                            <button className="save-btn" onClick={() => {
-                                const a = document.createElement('a');
-                                a.href = URL.createObjectURL(new Blob([JSON.stringify({race: selectedRace, advantages: selectedAdvantages, locations: hitLocations})], {type: 'application/json'}));
-                                a.download = `wounds-${selectedRace}.json`;
-                                a.click();
-                            }}>Save</button>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
+          React.createElement('div', {className: 'controls'},
+            React.createElement('button', {className: 'reset-btn', onClick: function() { if (window.confirm('Clear all wounds?')) setHitLocations(getInitialHitLocations(selectedRace, selectedAdvantages)); }}, 'Clear Wounds'),
+            React.createElement('button', {className: 'reset-all-btn', onClick: function() {
+              if (window.confirm('Reset everything? All character data will be lost.')) {
+                setCharName(''); setSelectedRace('Human'); setSelectedAdvantages([]);
+                setHitLocations(getInitialHitLocations('Human', []));
+                setArmor({'Head':0,'Torso':0,'Left Arm':0,'Right Arm':0,'Left Leg':0,'Right Leg':0});
+                setXP(0); setWeapons([]); setInventory([]); setAdvantages([]); setProblems([]);
+              }
+            }}, 'Reset All')
+          )
+        )
+      );
+    };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+    ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+
+  </script>
 </body>
 </html>
