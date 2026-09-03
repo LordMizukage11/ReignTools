@@ -2,162 +2,637 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reign: Warcraft Character Tracker</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a0e0e">
+  <title>Reign: Warcraft Tool</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700;900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
     body { font-family: 'Crimson Text', Georgia, serif; background-color: #0a0a0a; }
-    .app-wrapper { min-height: 100vh; padding: 20px; transition: background 0.5s ease; }
-    .theme-alliance {
-      background: linear-gradient(160deg, #0a1628 0%, #112240 50%, #0a1628 100%);
-      --bg-panel: rgba(10, 25, 50, 0.92); --bg-box: rgba(5, 15, 35, 0.85);
-      --bg-box-solid: #0b1a30; --text-main: #c8d6e5; --text-sub: #6b8299;
-      --text-dim: #3d5570; --border-color: #1a3a5c; --border-hover: #2a6cb0;
-      --accent: #c5a44e; --accent-dim: #8a7535; --btn-text: #0a0f1a;
-      --shock-color: #2a6cb0; --killing-color: #c5a44e;
-      --killing-text: #0a0f1a; --shock-text: #e0e8f0;
+    button, input, select { font-family: inherit; }
+
+    .app-wrapper {
+      min-height: 100vh; padding: 20px;
+      transition: background 0.6s ease;
       --danger: #a03030; --danger-light: #c04040;
-      --panel-border: #1e3e66; --ornament: #c5a44e;
+      --d10: polygon(50% 0%, 100% 34%, 82% 100%, 18% 100%, 0% 34%);
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+      position: relative;
     }
-    .theme-horde {
-      background: linear-gradient(160deg, #120808 0%, #1a0a0a 50%, #120808 100%);
-      --bg-panel: rgba(20, 10, 10, 0.92); --bg-box: rgba(12, 5, 5, 0.85);
-      --bg-box-solid: #1a0e0e; --text-main: #d4c4b0; --text-sub: #8a7a6a;
-      --text-dim: #5a4a3a; --border-color: #3a1a1a; --border-hover: #7a2a2a;
-      --accent: #8a2020; --accent-dim: #5a1515; --btn-text: #f0e0d0;
-      --shock-color: #b08a3a; --killing-color: #8a2020;
-      --killing-text: #f0e0d0; --shock-text: #1a1008;
-      --danger: #a03030; --danger-light: #c04040;
-      --panel-border: #4a1a1a; --ornament: #8a2020;
+    .app-wrapper::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.014) 0 2px, transparent 2px 4px),
+        repeating-linear-gradient(-45deg, rgba(0,0,0,0.05) 0 3px, transparent 3px 6px);
     }
-    .container { max-width: 800px; margin: 0 auto; background: var(--bg-panel); border-radius: 4px; padding: 35px 30px; box-shadow: 0 0 80px rgba(0,0,0,0.7), inset 0 0 80px rgba(0,0,0,0.15); border: 1px solid var(--panel-border); position: relative; }
-    .container::before, .container::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); width: 60%; height: 1px; background: linear-gradient(90deg, transparent, var(--ornament), transparent); }
-    .container::before { top: 12px; } .container::after { bottom: 12px; }
-    h1 { text-align: center; color: var(--accent); font-family: 'Cinzel', serif; font-weight: 900; font-size: 2.2em; letter-spacing: 3px; margin-bottom: 2px; }
-    .subtitle { text-align: center; color: var(--text-dim); font-size: 0.85em; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 30px; font-family: 'Cinzel', serif; }
-    h2.section-title { font-family: 'Cinzel', serif; font-weight: 700; color: var(--accent); font-size: 1.1em; letter-spacing: 2px; text-transform: uppercase; text-align: center; margin-bottom: 15px; position: relative; padding-bottom: 8px; }
-    h2.section-title::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 40px; height: 1px; background: var(--accent-dim); }
-    .theme-toggle-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 28px; }
-    .theme-label { font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.85em; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); transition: color 0.3s; }
-    .theme-label.active { color: var(--accent); }
-    .switch { position: relative; display: inline-block; width: 52px; height: 28px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .4s; border-radius: 28px; }
-    .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px; background-color: var(--text-main); transition: .4s; border-radius: 50%; }
-    input:checked + .slider { background-color: var(--accent-dim); }
-    input:checked + .slider:before { transform: translateX(24px); }
-    .char-name-input { width: 100%; text-align: center; padding: 8px; background: transparent; border: none; border-bottom: 1px solid var(--border-color); color: var(--text-main); font-family: 'Cinzel', serif; font-size: 1.5em; font-weight: 700; letter-spacing: 1px; margin-bottom: 25px; outline: none; transition: border-color 0.3s; }
+    .app-wrapper > * { position: relative; z-index: 1; }
+
+    .container {
+      max-width: 820px; margin: 0 auto; background: var(--bg-panel);
+      border-radius: 5px; padding: 40px 30px 34px;
+      box-shadow: 0 0 90px rgba(0,0,0,0.75), inset 0 0 90px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.5);
+      border: 1px solid var(--panel-border); position: relative;
+    }
+    .container::before {
+      content: ''; position: absolute; inset: 7px; border: 1px solid var(--accent-dim);
+      opacity: 0.35; pointer-events: none; border-radius: 2px;
+    }
+    .corner {
+      position: absolute; color: var(--ornament); font-size: 0.7em; line-height: 1;
+      opacity: 0.75; pointer-events: none; text-shadow: 0 0 8px var(--accent-dim);
+    }
+    .corner.tl { top: 3px; left: 3px; } .corner.tr { top: 3px; right: 3px; }
+    .corner.bl { bottom: 3px; left: 3px; } .corner.br { bottom: 3px; right: 3px; }
+
+    /* ---------------- Crest artwork ---------------- */
+    .crest-svg { display: block; color: var(--accent); }
+    .crest { text-align: center; position: relative; margin-bottom: 6px; }
+    .crest-main {
+      width: 74px; height: 74px; margin: 0 auto 8px;
+      filter: drop-shadow(0 0 16px var(--accent-dim)) drop-shadow(0 2px 3px rgba(0,0,0,0.7));
+    }
+    .crest-watermark {
+      position: absolute; top: -26px; left: 50%; transform: translateX(-50%);
+      width: 230px; height: 230px; opacity: 0.055;
+      pointer-events: none; user-select: none; z-index: -1;
+    }
+    h1 {
+      text-align: center; color: var(--accent); font-family: 'Cinzel Decorative', 'Cinzel', serif;
+      font-weight: 900; font-size: 2.1em; letter-spacing: 3px; margin-bottom: 4px;
+      text-shadow: 0 0 24px var(--accent-dim), 0 2px 3px rgba(0,0,0,0.7);
+    }
+    .subtitle {
+      text-align: center; color: var(--text-dim); font-size: 0.78em; letter-spacing: 4px;
+      text-transform: uppercase; font-family: 'Cinzel', serif;
+    }
+    .flourish { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 12px 0 22px; }
+    .flourish::before, .flourish::after {
+      content: ''; height: 1px; width: 90px;
+      background: linear-gradient(90deg, transparent, var(--accent-dim));
+    }
+    .flourish::after { background: linear-gradient(90deg, var(--accent-dim), transparent); }
+    .flourish span { color: var(--accent); font-size: 0.6em; opacity: 0.8; }
+
+    h2.section-title {
+      font-family: 'Cinzel', serif; font-weight: 700; color: var(--accent); font-size: 1.05em;
+      letter-spacing: 2px; text-transform: uppercase; text-align: center; margin-bottom: 15px;
+      position: relative; padding-bottom: 8px;
+    }
+    h2.section-title::after {
+      content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 40px; height: 1px; background: var(--accent-dim);
+    }
+
+    /* ---------------- Theme tiles ---------------- */
+    .theme-groups { display: flex; flex-direction: column; gap: 16px; }
+    .theme-group-label {
+      font-family: 'Cinzel', serif; font-size: 0.66em; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+    }
+    .theme-group-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border-color), transparent); }
+    .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+    .theme-tile {
+      position: relative; display: flex; align-items: center; gap: 9px;
+      padding: 11px 12px; min-height: 56px; border-radius: 5px;
+      border: 1px solid var(--tile-border, var(--border-color));
+      background: linear-gradient(135deg, var(--tile-bg-a) 0%, var(--tile-bg-b) 100%);
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.2s, border-color 0.2s;
+      overflow: hidden; -webkit-tap-highlight-color: transparent;
+    }
+    .theme-tile input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .theme-tile:hover { transform: translateY(-2px); border-color: var(--tile-accent); }
+    .theme-tile:active { transform: translateY(0); }
+    .theme-tile.checked {
+      border-color: var(--tile-accent);
+      box-shadow: 0 0 0 1px var(--tile-accent), 0 0 18px -4px var(--tile-accent);
+    }
+    .tick {
+      flex: 0 0 auto; width: 22px; height: 22px; border-radius: 4px;
+      border: 1px solid var(--tile-accent); background: rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; position: relative;
+    }
+    .tick::after {
+      content: ''; width: 5px; height: 10px; margin-top: -2px;
+      border: solid transparent; border-width: 0 2px 2px 0;
+      transform: rotate(45deg) scale(0.4); opacity: 0; transition: all 0.2s;
+    }
+    .theme-tile.checked .tick { background: var(--tile-accent); box-shadow: 0 0 10px -2px var(--tile-accent); }
+    .theme-tile.checked .tick::after { border-color: var(--tile-tick); transform: rotate(45deg) scale(1); opacity: 1; }
+    .tile-body { min-width: 0; flex: 1; }
+    .tile-name {
+      font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.78em; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--tile-text); white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; display: block;
+    }
+    .tile-sub { font-size: 0.72em; color: var(--tile-sub); letter-spacing: 1px; }
+    .tile-crest {
+      position: absolute; right: 6px; bottom: -8px; width: 46px; height: 46px;
+      color: var(--tile-accent); opacity: 0.2; pointer-events: none;
+    }
+    .theme-tile.checked .tile-crest { opacity: 0.42; }
+
+    .char-name-wrap { position: relative; margin-bottom: 22px; }
+    .char-name-input {
+      width: 100%; text-align: center; padding: 10px 8px; background: transparent; border: none;
+      border-bottom: 1px solid var(--border-color); color: var(--text-main);
+      font-family: 'Cinzel', serif; font-size: 1.5em; font-weight: 700; letter-spacing: 1px;
+      outline: none; transition: border-color 0.3s;
+    }
     .char-name-input:focus { border-bottom-color: var(--accent); }
     .char-name-input::placeholder { color: var(--text-dim); font-weight: 400; }
+    .race-epithet {
+      text-align: center; margin-top: 7px; color: var(--text-dim); font-style: italic;
+      font-size: 0.92em; letter-spacing: 0.5px;
+    }
+
     @keyframes slowPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.85; } }
-    .notification-banner { padding: 12px; margin-bottom: 20px; text-align: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 1em; text-transform: uppercase; letter-spacing: 3px; animation: slowPulse 3s ease-in-out infinite; border: 1px solid; }
+    .notification-banner {
+      padding: 12px; margin-bottom: 20px; text-align: center; font-family: 'Cinzel', serif;
+      font-weight: 700; font-size: 1em; text-transform: uppercase; letter-spacing: 3px;
+      animation: slowPulse 3s ease-in-out infinite; border: 1px solid;
+    }
     .banner-dead { background: rgba(120,10,10,0.3); color: #d44; border-color: #611; }
     .banner-ko { background: rgba(140,80,10,0.2); color: #d89030; border-color: #604020; }
     .banner-penalty { background: rgba(140,120,10,0.15); color: #c0a030; border-color: #605020; }
-    .xp-row { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 25px; padding: 12px 0; }
-    .xp-label { font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.85em; letter-spacing: 2px; text-transform: uppercase; color: var(--text-sub); }
-    .xp-value { font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.8em; color: var(--accent); min-width: 50px; text-align: center; }
-    .xp-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--bg-box-solid); color: var(--text-main); font-size: 1.3em; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-family: 'Cinzel', serif; line-height: 1; }
-    .xp-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .xp-step { padding: 4px 8px; border-radius: 4px; background: var(--bg-box-solid); border: 1px solid var(--border-color); color: var(--text-sub); font-size: 0.85em; text-align: center; width: 50px; font-family: 'Crimson Text', serif; font-weight: 600; }
-    .xp-step:focus { border-color: var(--accent); outline: none; }
-    .section { margin-bottom: 20px; }
-    .section-header { display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; padding: 10px 0; user-select: none; }
+
+    .xp-row { display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 8px; padding-top: 6px; flex-wrap: wrap; }
+    .xp-label { font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.82em; letter-spacing: 2px; text-transform: uppercase; color: var(--text-sub); }
+    .xp-value { font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.9em; color: var(--accent); min-width: 58px; text-align: center; text-shadow: 0 0 16px var(--accent-dim); }
+    .xp-btn {
+      width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border-color);
+      background: var(--bg-box-solid); color: var(--text-main); font-size: 1.4em; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+      font-family: 'Cinzel', serif; line-height: 1; -webkit-tap-highlight-color: transparent;
+    }
+    .xp-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 14px -4px var(--accent); }
+    .xp-btn:active { transform: scale(0.93); }
+    .step-group { display: flex; justify-content: center; gap: 6px; margin-bottom: 16px; }
+    .step-chip {
+      min-width: 46px; min-height: 34px; padding: 4px 10px; border-radius: 4px;
+      background: var(--bg-box-solid); border: 1px solid var(--border-color); color: var(--text-dim);
+      font-family: 'Cinzel', serif; font-size: 0.74em; font-weight: 700; letter-spacing: 1px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .step-chip.active { border-color: var(--accent); color: var(--accent); background: var(--bg-box); }
+
+    .section { margin-bottom: 18px; }
+    .section-header { display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; padding: 12px 0; user-select: none; -webkit-tap-highlight-color: transparent; }
     .section-header::before, .section-header::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border-color)); }
     .section-header::after { background: linear-gradient(90deg, var(--border-color), transparent); }
     .section-header:hover h2.section-title { color: var(--text-main); }
-    .section-header h2.section-title { margin-bottom: 0; padding-bottom: 0; cursor: pointer; white-space: nowrap; }
+    .section-header h2.section-title { margin-bottom: 0; padding-bottom: 0; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 9px; }
     .section-header h2.section-title::after { display: none; }
-    .toggle-arrow { color: var(--text-dim); font-size: 0.7em; transition: transform 0.3s; margin-left: 6px; }
+    .sect-diamond { color: var(--accent-dim); font-size: 0.55em; }
+    .toggle-arrow { color: var(--text-dim); font-size: 0.62em; transition: transform 0.3s; display: inline-block; }
     .toggle-arrow.open { transform: rotate(180deg); }
-    .section-body { overflow: hidden; transition: max-height 0.4s ease, opacity 0.3s ease; max-height: 0; opacity: 0; }
-    .section-body.open { max-height: 3000px; opacity: 1; }
-    .controls-row { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
-    .controls-row label { color: var(--text-sub); font-family: 'Cinzel', serif; font-size: 0.85em; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
-    .controls-row select { padding: 8px 16px; border-radius: 4px; background: var(--bg-box-solid); color: var(--text-main); border: 1px solid var(--border-color); font-family: 'Crimson Text', serif; font-size: 1.05em; cursor: pointer; }
+    .section-body { overflow: hidden; transition: max-height 0.45s ease, opacity 0.3s ease; max-height: 0; opacity: 0; }
+    .section-body.open { max-height: 12000px; opacity: 1; }
+
+    .controls-row { display: flex; justify-content: center; align-items: center; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+    .controls-row label { color: var(--text-sub); font-family: 'Cinzel', serif; font-size: 0.82em; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+    .controls-row select {
+      padding: 11px 16px; border-radius: 4px; background: var(--bg-box-solid); color: var(--text-main);
+      border: 1px solid var(--border-color); font-family: 'Cinzel', serif; font-size: 16px;
+      cursor: pointer; min-height: 46px; letter-spacing: 1px;
+    }
     .controls-row select:focus { border-color: var(--accent); outline: none; }
-    .modifier-row { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-bottom: 20px; }
-    .checkbox-label { color: var(--text-sub); display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 1em; }
-    .checkbox-label input { cursor: pointer; width: 16px; height: 16px; accent-color: var(--accent); }
-    .hit-location { background: var(--bg-box); border-radius: 4px; padding: 16px 18px; margin-bottom: 10px; border: 1px solid var(--border-color); transition: border-color 0.3s ease; }
+    .race-crest-inline { width: 34px; height: 34px; color: var(--accent); opacity: 0.85; flex: 0 0 auto; }
+    .modifier-row { display: flex; flex-wrap: wrap; gap: 9px; justify-content: center; margin-bottom: 18px; }
+    .checkbox-label {
+      color: var(--text-sub); display: flex; align-items: center; gap: 9px; cursor: pointer;
+      font-size: 0.98em; padding: 9px 13px; min-height: 46px; border: 1px solid var(--border-color);
+      border-radius: 5px; background: var(--bg-box-solid); transition: all 0.2s; position: relative;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .checkbox-label:hover { border-color: var(--border-hover); }
+    .checkbox-label.on { border-color: var(--accent); color: var(--text-main); box-shadow: 0 0 14px -6px var(--accent); }
+    .checkbox-label input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .mini-tick {
+      width: 19px; height: 19px; flex: 0 0 auto; border-radius: 4px;
+      border: 1px solid var(--border-hover); background: rgba(0,0,0,0.35);
+      display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .mini-tick::after {
+      content: ''; width: 4px; height: 9px; margin-top: -2px;
+      border: solid transparent; border-width: 0 2px 2px 0;
+      transform: rotate(45deg) scale(0.4); opacity: 0; transition: all 0.2s;
+    }
+    .checkbox-label.on .mini-tick { background: var(--accent); border-color: var(--accent); }
+    .checkbox-label.on .mini-tick::after { border-color: var(--btn-text); transform: rotate(45deg) scale(1); opacity: 1; }
+
+    /* ---------------- Main weapon banner ---------------- */
+    .mainweap-banner {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      background: linear-gradient(135deg, var(--bg-box-solid), var(--bg-box));
+      border: 1px solid var(--accent-dim); border-radius: 6px;
+      padding: 12px 15px; margin-bottom: 14px; position: relative; overflow: hidden;
+      box-shadow: 0 0 22px -12px var(--accent);
+    }
+    .mw-crest {
+      position: absolute; right: -10px; bottom: -18px; width: 92px; height: 92px;
+      color: var(--accent); opacity: 0.08; pointer-events: none;
+    }
+    .mw-star { color: var(--accent); font-size: 1.05em; line-height: 1; flex: 0 0 auto; }
+    .mw-body { flex: 1 1 160px; min-width: 0; }
+    .mw-label { font-family: 'Cinzel', serif; font-size: 0.58em; letter-spacing: 3px; text-transform: uppercase; color: var(--text-dim); display: block; }
+    .mw-name { font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.05em; color: var(--text-main); letter-spacing: 0.5px; display: block; margin-top: 2px; }
+    .mw-dmg {
+      font-family: 'Cinzel', serif; font-weight: 900; font-size: 0.95em; letter-spacing: 1px;
+      color: var(--accent); background: rgba(0,0,0,0.35); border: 1px solid var(--accent-dim);
+      padding: 7px 13px; border-radius: 4px; white-space: nowrap; position: relative;
+    }
+    .mw-traits { font-size: 0.8em; color: var(--text-dim); letter-spacing: 1px; margin-top: 3px; display: block; }
+    .mw-switch {
+      background: transparent; border: 1px solid var(--border-color); color: var(--text-dim);
+      border-radius: 4px; padding: 7px 11px; min-height: 38px; cursor: pointer; position: relative;
+      font-family: 'Cinzel', serif; font-size: 0.64em; letter-spacing: 1px; text-transform: uppercase;
+      transition: all 0.2s;
+    }
+    .mw-switch:hover { border-color: var(--accent); color: var(--accent); }
+    .mw-empty {
+      text-align: center; color: var(--text-dim); font-style: italic; font-size: 0.88em;
+      border: 1px dashed var(--border-color); border-radius: 6px; padding: 11px; margin-bottom: 14px;
+    }
+
+    /* ---------------- Wounds ---------------- */
+    .hit-location { background: var(--bg-box); border-radius: 5px; padding: 15px 17px; margin-bottom: 10px; border: 1px solid var(--border-color); transition: border-color 0.3s ease, background 0.3s; }
     .hit-location:hover { border-color: var(--border-hover); }
-    .hit-location.crippled { border-color: var(--danger); background: rgba(120,20,20,0.08); }
-    .location-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
-    .location-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .location-name { font-family: 'Cinzel', serif; font-size: 1.1em; font-weight: 700; color: var(--text-main); letter-spacing: 1px; }
-    .crippled-warning { color: var(--danger-light); font-size: 0.7em; text-transform: uppercase; font-weight: 700; letter-spacing: 2px; font-family: 'Cinzel', serif; }
-    .location-number { background: var(--bg-box-solid); color: var(--text-sub); border: 1px solid var(--border-color); padding: 3px 12px; border-radius: 3px; font-weight: 700; font-family: 'Cinzel', serif; font-size: 0.85em; }
-    .armor-badge { display: flex; align-items: center; gap: 5px; color: var(--text-dim); font-size: 0.85em; font-family: 'Cinzel', serif; }
-    .armor-badge input { width: 36px; padding: 3px; background: var(--bg-box-solid); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 3px; text-align: center; font-weight: 700; font-family: 'Crimson Text', serif; font-size: 0.95em; }
-    .armor-badge input:focus { border-color: var(--accent); outline: none; }
-    .boxes { display: flex; gap: 6px; flex-wrap: wrap; }
-    .box { width: 32px; height: 32px; border: 1px solid var(--border-color); background: var(--bg-box-solid); border-radius: 3px; cursor: pointer; transition: all 0.15s ease; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8em; color: var(--text-dim); font-family: 'Cinzel', serif; }
+    .hit-location.crippled { border-color: var(--danger); background: rgba(120,20,20,0.1); }
+    .location-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .location-left { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .location-name { font-family: 'Cinzel', serif; font-size: 1.05em; font-weight: 700; color: var(--text-main); letter-spacing: 1px; }
+    .crippled-warning { color: var(--danger-light); font-size: 0.68em; text-transform: uppercase; font-weight: 700; letter-spacing: 2px; font-family: 'Cinzel', serif; }
+    .location-number { background: var(--bg-box-solid); color: var(--text-sub); border: 1px solid var(--border-color); padding: 3px 11px; border-radius: 3px; font-weight: 700; font-family: 'Cinzel', serif; font-size: 0.8em; }
+
+    .ar-block { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+    .ar-shield {
+      display: flex; align-items: center; gap: 7px; padding: 5px 11px 5px 8px;
+      border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-box-solid);
+      transition: all 0.25s;
+    }
+    .ar-shield.armored { border-color: var(--accent-dim); box-shadow: 0 0 14px -7px var(--accent); }
+    .ar-icon { font-size: 0.95em; color: var(--text-dim); line-height: 1; }
+    .ar-shield.armored .ar-icon { color: var(--accent); }
+    .ar-cap { font-family: 'Cinzel', serif; font-size: 0.62em; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); }
+    .ar-total { font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.25em; color: var(--text-main); line-height: 1; min-width: 16px; text-align: center; }
+    .ar-shield.armored .ar-total { color: var(--accent); }
+    .ar-source { font-size: 0.76em; color: var(--text-dim); font-style: italic; text-align: right; max-width: 240px; }
+    .ar-adjust { display: flex; align-items: center; gap: 3px; }
+    .ar-btn { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-box-solid); color: var(--text-sub); font-size: 0.9em; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; transition: all 0.15s; }
+    .ar-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .ar-btn:active { transform: scale(0.9); }
+
+    .boxes { display: flex; gap: 7px; flex-wrap: wrap; }
+    .box {
+      width: 38px; height: 38px; border: 1px solid var(--border-color); background: var(--bg-box-solid);
+      border-radius: 4px; cursor: pointer; transition: all 0.15s ease; display: flex;
+      align-items: center; justify-content: center; font-weight: 700; font-size: 0.85em;
+      color: var(--text-dim); font-family: 'Cinzel', serif; -webkit-tap-highlight-color: transparent;
+      user-select: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
     .box:hover { border-color: var(--border-hover); transform: scale(1.08); }
-    .box.filled.shock { background: var(--shock-color); border-color: var(--shock-color); color: var(--shock-text); }
-    .box.filled.killing { background: var(--killing-color); border-color: var(--killing-color); color: var(--killing-text); }
-    .module-card { background: var(--bg-box); border-radius: 4px; padding: 18px; border: 1px solid var(--border-color); }
-    .dice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-    @media (max-width: 600px) { .dice-grid { grid-template-columns: 1fr; } }
-    .input-section { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
-    .input-section label { color: var(--text-sub); font-size: 0.9em; }
-    .input-section input { width: 55px; padding: 6px; border: 1px solid var(--border-color); background: var(--bg-box-solid); color: var(--text-main); border-radius: 3px; font-size: 1em; text-align: center; font-weight: 700; font-family: 'Crimson Text', serif; }
-    .input-section input:focus { border-color: var(--accent); outline: none; }
-    .action-btn { background: var(--accent); color: var(--btn-text); padding: 7px 20px; border: none; border-radius: 3px; font-size: 0.85em; font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-family: 'Cinzel', serif; letter-spacing: 1px; }
-    .action-btn:hover { filter: brightness(1.2); }
-    .all-dice { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
-    .die { width: 38px; height: 38px; background: var(--bg-box-solid); border: 1px solid var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 1.3em; font-weight: 700; color: var(--text-main); font-family: 'Cinzel', serif; }
-    .die.matched { background: var(--accent); border-color: var(--accent); color: var(--btn-text); }
-    .matches-section { background: var(--bg-box-solid); border: 1px solid var(--border-color); border-radius: 3px; padding: 10px; text-align: center; }
-    .match-result { display: inline-block; background: var(--accent); color: var(--btn-text); padding: 5px 12px; border-radius: 3px; margin: 3px; font-weight: 700; font-family: 'Cinzel', serif; font-size: 0.9em; }
-    .healing-result { display: inline-block; background: var(--bg-box); border: 1px solid var(--accent-dim); color: var(--text-main); padding: 6px 12px; border-radius: 3px; margin: 3px; font-size: 0.9em; }
+    .box:active { transform: scale(0.94); }
+    .box.filled.shock { background: var(--shock-color); border-color: var(--shock-color); color: var(--shock-text); box-shadow: 0 0 12px -4px var(--shock-color); }
+    .box.filled.killing { background: var(--killing-color); border-color: var(--killing-color); color: var(--killing-text); box-shadow: 0 0 12px -4px var(--killing-color); }
+    .hint { text-align: center; color: var(--text-dim); font-size: 0.86em; font-style: italic; margin-bottom: 14px; }
+
+    /* ---------------- ARMORY ---------------- */
+    .gear-tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; flex-wrap: wrap; }
+    .gear-tab {
+      flex: 1 1 140px; max-width: 220px; padding: 12px 16px; min-height: 50px; border-radius: 6px;
+      background: var(--bg-box-solid); border: 1px solid var(--border-color); color: var(--text-dim);
+      font-family: 'Cinzel', serif; font-size: 0.78em; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .gear-tab:hover { border-color: var(--border-hover); color: var(--text-sub); }
+    .gear-tab.active { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 18px -7px var(--accent); background: var(--bg-box); }
+    .gear-tab-glyph { font-size: 1.15em; line-height: 1; }
+    .gear-count { font-size: 0.85em; opacity: 0.7; font-weight: 400; }
+
+    .gear-card {
+      background: var(--bg-box-solid); border: 1px solid var(--border-color); border-radius: 5px;
+      padding: 12px 14px; margin-bottom: 9px; transition: all 0.2s;
+    }
+    .gear-card.off { opacity: 0.45; }
+    .gear-card.on { border-color: var(--accent-dim); }
+    .gear-card.primary { border-color: var(--accent); box-shadow: 0 0 20px -9px var(--accent); }
+    .gear-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .equip-toggle {
+      position: relative; display: flex; align-items: center; gap: 8px; cursor: pointer;
+      flex: 1 1 130px; min-width: 0; -webkit-tap-highlight-color: transparent;
+    }
+    .equip-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .equip-tick {
+      width: 20px; height: 20px; flex: 0 0 auto; border-radius: 4px; border: 1px solid var(--border-hover);
+      background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .equip-tick::after {
+      content: ''; width: 4px; height: 9px; margin-top: -2px; border: solid transparent;
+      border-width: 0 2px 2px 0; transform: rotate(45deg) scale(0.4); opacity: 0; transition: all 0.2s;
+    }
+    .gear-card.on .equip-tick { background: var(--accent); border-color: var(--accent); }
+    .gear-card.on .equip-tick::after { border-color: var(--btn-text); transform: rotate(45deg) scale(1); opacity: 1; }
+    .gear-name-input {
+      font-family: 'Cinzel', serif; font-weight: 700; color: var(--text-main); font-size: 0.95em;
+      letter-spacing: 0.5px; background: transparent; border: none; border-bottom: 1px solid transparent;
+      padding: 4px 2px; min-width: 0; width: 100%; outline: none; transition: border-color 0.2s;
+    }
+    .gear-name-input:focus { border-bottom-color: var(--accent); }
+    .star-btn {
+      background: transparent; border: 1px solid var(--border-color); border-radius: 4px;
+      color: var(--text-dim); font-size: 1em; line-height: 1; width: 36px; height: 36px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex: 0 0 auto; -webkit-tap-highlight-color: transparent;
+    }
+    .star-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .star-btn.on { color: var(--accent); border-color: var(--accent); text-shadow: 0 0 10px var(--accent-dim); background: var(--bg-box); }
+    .gear-stat { display: flex; align-items: center; gap: 5px; }
+    .gear-stat-label { font-family: 'Cinzel', serif; font-size: 0.62em; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; }
+    .gear-stat-val { font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.15em; color: var(--accent); min-width: 26px; text-align: center; }
+    .tag-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+    .tag-chip {
+      min-width: 44px; min-height: 36px; padding: 5px 9px; border-radius: 4px;
+      background: var(--bg-box); border: 1px solid var(--border-color); color: var(--text-dim);
+      font-family: 'Cinzel', serif; font-size: 0.7em; font-weight: 700; letter-spacing: 1px;
+      cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+    }
+    .tag-chip:hover { border-color: var(--border-hover); color: var(--text-sub); }
+    .tag-chip.on { background: var(--accent); border-color: var(--accent); color: var(--btn-text); }
+    .tag-label {
+      font-family: 'Cinzel', serif; font-size: 0.6em; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-dim); align-self: center; margin-right: 2px;
+    }
+    .gear-notes {
+      width: 100%; margin-top: 9px; padding: 8px 10px; background: var(--bg-box);
+      border: 1px solid var(--border-color); color: var(--text-sub); border-radius: 4px;
+      font-size: 15px; font-family: 'Crimson Text', serif; min-height: 40px;
+    }
+    .gear-notes:focus { border-color: var(--accent); outline: none; color: var(--text-main); }
+
+    /* ---------------- Damage builder ---------------- */
+    .dmg-preview {
+      display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+      background: rgba(0,0,0,0.3); border: 1px solid var(--accent-dim); border-radius: 5px;
+      padding: 9px 12px; margin-top: 11px;
+    }
+    .dmg-preview-label { font-family: 'Cinzel', serif; font-size: 0.58em; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); }
+    .dmg-preview-text { font-family: 'Cinzel', serif; font-weight: 900; font-size: 0.98em; color: var(--accent); letter-spacing: 1px; flex: 1; min-width: 0; }
+    .dmg-part {
+      border: 1px solid var(--border-color); border-radius: 5px; padding: 9px 10px;
+      margin-top: 8px; background: var(--bg-box);
+    }
+    .dmg-part-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .dmg-seg { display: flex; gap: 4px; }
+    .seg-chip {
+      min-height: 36px; padding: 6px 10px; border-radius: 4px; background: var(--bg-box-solid);
+      border: 1px solid var(--border-color); color: var(--text-dim); font-family: 'Cinzel', serif;
+      font-size: 0.68em; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+    }
+    .seg-chip:hover { border-color: var(--border-hover); color: var(--text-sub); }
+    .seg-chip.on { background: var(--accent); border-color: var(--accent); color: var(--btn-text); }
+    .seg-chip.kill.on { background: var(--killing-color); border-color: var(--killing-color); color: var(--killing-text); }
+    .seg-chip.shock.on { background: var(--shock-color); border-color: var(--shock-color); color: var(--shock-text); }
+    .mod-stepper { display: flex; align-items: center; gap: 4px; }
+    .mod-val { font-family: 'Cinzel', serif; font-weight: 900; font-size: 1em; color: var(--text-main); min-width: 30px; text-align: center; }
+    .dmg-add-btn {
+      margin-top: 9px; width: 100%; padding: 10px; min-height: 44px; border-radius: 5px;
+      background: transparent; border: 1px dashed var(--border-hover); color: var(--text-sub);
+      font-family: 'Cinzel', serif; font-size: 0.68em; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+    }
+    .dmg-add-btn:hover { border-style: solid; border-color: var(--accent); color: var(--accent); }
+    .dmg-formula-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 9px; }
+    .formula-chip {
+      padding: 7px 10px; min-height: 36px; border-radius: 4px; background: var(--bg-box-solid);
+      border: 1px dashed var(--border-color); color: var(--text-dim); font-family: 'Cinzel', serif;
+      font-size: 0.64em; font-weight: 700; letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
+    }
+    .formula-chip:hover { border-style: solid; border-color: var(--accent); color: var(--accent); }
+
+    .preset-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
+    .preset-btn {
+      padding: 9px 12px; min-height: 42px; border-radius: 5px; background: var(--bg-box-solid);
+      border: 1px dashed var(--border-hover); color: var(--text-sub); font-family: 'Cinzel', serif;
+      font-size: 0.7em; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .preset-btn:hover { border-style: solid; border-color: var(--accent); color: var(--accent); }
+    .sub-head {
+      font-family: 'Cinzel', serif; font-size: 0.64em; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--text-dim); margin: 4px 0 10px; display: flex; align-items: center; gap: 8px;
+    }
+    .sub-head::before, .sub-head::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border-color)); }
+    .sub-head::after { background: linear-gradient(90deg, var(--border-color), transparent); }
+    .armor-mode-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    .mode-chip {
+      padding: 9px 15px; min-height: 42px; border-radius: 5px; background: var(--bg-box-solid);
+      border: 1px solid var(--border-color); color: var(--text-dim); font-family: 'Cinzel', serif;
+      font-size: 0.72em; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .mode-chip.active { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 14px -6px var(--accent); }
+    .armor-summary { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 14px 0 4px; }
+    .sum-cell { text-align: center; padding: 8px 4px; border-radius: 4px; background: var(--bg-box); border: 1px solid var(--border-color); }
+    .sum-cell.covered { border-color: var(--accent-dim); }
+    .sum-loc { font-family: 'Cinzel', serif; font-size: 0.6em; letter-spacing: 1px; color: var(--text-dim); text-transform: uppercase; display: block; }
+    .sum-ar { font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.15em; color: var(--text-sub); }
+    .sum-cell.covered .sum-ar { color: var(--accent); }
+    .note-line { text-align: center; color: var(--text-dim); font-size: 0.82em; font-style: italic; margin-top: 12px; line-height: 1.5; }
+
+    /* ---------------- Dice ---------------- */
+    .module-card { background: var(--bg-box); border-radius: 5px; padding: 18px 16px; border: 1px solid var(--border-color); position: relative; }
+    .dice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+    .stepper { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px; }
+    .step-btn {
+      width: 54px; height: 54px; flex: 0 0 auto; border-radius: 9px; border: 1px solid var(--border-color);
+      background: var(--bg-box-solid); color: var(--text-main); font-size: 1.6em; line-height: 1;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; font-family: 'Cinzel', serif; -webkit-tap-highlight-color: transparent;
+    }
+    .step-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 16px -6px var(--accent); }
+    .step-btn:active { transform: scale(0.92); }
+    .step-btn:disabled { opacity: 0.28; cursor: default; box-shadow: none; }
+    .pool-display { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 88px; }
+    .pool-num { font-family: 'Cinzel', serif; font-weight: 900; font-size: 2.5em; line-height: 1; color: var(--accent); text-shadow: 0 0 22px var(--accent-dim); }
+    .pool-cap { font-family: 'Cinzel', serif; font-size: 0.6em; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-top: 4px; }
+    .quick-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 14px; }
+    .quick-chip {
+      width: 40px; height: 40px; border-radius: 6px; border: 1px solid var(--border-color);
+      background: var(--bg-box-solid); color: var(--text-sub); font-family: 'Cinzel', serif;
+      font-weight: 700; font-size: 0.9em; cursor: pointer; transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .quick-chip:hover { border-color: var(--border-hover); color: var(--text-main); }
+    .quick-chip.active { background: var(--accent); border-color: var(--accent); color: var(--btn-text); box-shadow: 0 0 14px -4px var(--accent); }
+    .roll-btn {
+      position: relative; overflow: hidden; width: 100%; background: var(--accent); color: var(--btn-text);
+      padding: 15px 20px; border: none; border-radius: 6px; font-size: 0.98em; font-weight: 700;
+      cursor: pointer; transition: all 0.15s; text-transform: uppercase; font-family: 'Cinzel', serif;
+      letter-spacing: 2px; min-height: 54px; -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 3px 0 -1px rgba(0,0,0,0.45), 0 0 24px -8px var(--accent);
+    }
+    .roll-btn::after {
+      content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+      transform: skewX(-20deg); transition: left 0.5s ease;
+    }
+    .roll-btn:hover::after { left: 120%; }
+    .roll-btn:hover { filter: brightness(1.12); }
+    .roll-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 -1px rgba(0,0,0,0.45); filter: brightness(0.94); }
+    .roll-btn:disabled { opacity: 0.75; cursor: wait; }
+
+    .dice-tray {
+      display: flex; gap: 9px; flex-wrap: wrap; justify-content: center;
+      margin: 16px 0 12px; min-height: 54px; align-items: center;
+      padding: 12px 8px; border-radius: 6px;
+      background: radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0.28), transparent 70%);
+    }
+    .die-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+    .die {
+      position: relative; width: 46px; height: 50px; clip-path: var(--d10);
+      background: var(--border-hover); transform-origin: 50% 55%;
+      filter: drop-shadow(0 3px 4px rgba(0,0,0,0.55));
+    }
+    .die-inner {
+      position: absolute; inset: 2px; clip-path: var(--d10);
+      background: var(--bg-box-solid);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.15em;
+      color: var(--text-main); padding-top: 5px;
+      background-image:
+        linear-gradient(150deg, transparent 49.2%, rgba(255,255,255,0.09) 49.6%, transparent 50.4%),
+        linear-gradient(-150deg, transparent 49.2%, rgba(255,255,255,0.09) 49.6%, transparent 50.4%),
+        linear-gradient(to bottom, rgba(255,255,255,0.07), transparent 55%);
+    }
+    .die.matched { background: var(--accent); filter: drop-shadow(0 0 9px var(--accent-dim)) drop-shadow(0 3px 4px rgba(0,0,0,0.5)); }
+    .die.matched .die-inner { color: var(--btn-text); background-color: var(--accent); }
+    @keyframes tumble {
+      0%   { transform: translateY(0) rotate(0deg)    scale(1); }
+      25%  { transform: translateY(-13px) rotate(-95deg)  scale(1.06); }
+      50%  { transform: translateY(2px) rotate(-185deg) scale(0.95); }
+      75%  { transform: translateY(-9px) rotate(-275deg) scale(1.04); }
+      100% { transform: translateY(0) rotate(-360deg) scale(1); }
+    }
+    @keyframes settleIn {
+      0%   { transform: scale(1.3) rotate(-18deg); }
+      55%  { transform: scale(0.93) rotate(4deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    .die.rolling { animation: tumble 0.42s linear infinite; }
+    .die.landed { animation: settleIn 0.3s cubic-bezier(0.2,1.5,0.5,1); }
+    @keyframes matchGlow { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
+    .die-wrap.is-match::after {
+      content: ''; position: absolute; inset: -5px; clip-path: var(--d10);
+      background: var(--accent); z-index: -1; filter: blur(6px);
+      animation: matchGlow 2s ease-in-out infinite;
+    }
+    .roll-status {
+      text-align: center; font-family: 'Cinzel', serif; font-size: 0.7em; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; min-height: 14px;
+    }
+    .matches-section { background: var(--bg-box-solid); border: 1px solid var(--border-color); border-radius: 4px; padding: 12px; text-align: center; }
+    .match-result { display: inline-block; background: var(--accent); color: var(--btn-text); padding: 7px 14px; border-radius: 4px; margin: 3px; font-weight: 700; font-family: 'Cinzel', serif; font-size: 1em; box-shadow: 0 0 16px -6px var(--accent); }
+    .dmg-result {
+      display: block; margin-top: 8px; font-family: 'Cinzel', serif; font-size: 0.82em;
+      color: var(--text-sub); letter-spacing: 1px;
+    }
+    .dmg-result b { color: var(--accent); font-weight: 900; }
+    .healing-result { display: inline-block; background: var(--bg-box); border: 1px solid var(--accent-dim); color: var(--text-main); padding: 7px 12px; border-radius: 4px; margin: 3px; font-size: 0.9em; }
     .no-match { color: var(--text-dim); font-style: italic; }
+
+    /* ---------------- Inventory / traits ---------------- */
     .item-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-    .item-card { background: var(--bg-box-solid); border: 1px solid var(--border-color); border-radius: 3px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-    .item-info { flex: 1; } .item-name { font-family: 'Cinzel', serif; font-weight: 700; color: var(--accent); font-size: 1em; letter-spacing: 0.5px; }
+    .item-card { background: var(--bg-box-solid); border: 1px solid var(--border-color); border-radius: 4px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; transition: border-color 0.2s; }
+    .item-card:hover { border-color: var(--border-hover); }
+    .item-info { flex: 1; min-width: 0; }
+    .item-name { font-family: 'Cinzel', serif; font-weight: 700; color: var(--accent); font-size: 1em; letter-spacing: 0.5px; }
     .item-detail { color: var(--text-sub); font-size: 0.9em; margin-top: 2px; } .item-detail span { margin-right: 14px; }
     .item-right { display: flex; align-items: center; gap: 8px; }
     .qty-controls { display: flex; align-items: center; gap: 4px; }
-    .qty-btn { width: 24px; height: 24px; border-radius: 3px; border: 1px solid var(--border-color); background: var(--bg-box); color: var(--text-sub); font-size: 0.9em; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; font-family: 'Cinzel', serif; line-height: 1; padding: 0; }
+    .qty-btn { width: 34px; height: 34px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-box); color: var(--text-sub); font-size: 1em; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; font-family: 'Cinzel', serif; line-height: 1; padding: 0; }
     .qty-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .qty-display { min-width: 24px; text-align: center; font-weight: 700; color: var(--text-main); font-family: 'Cinzel', serif; font-size: 0.95em; }
-    .add-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; padding-top: 10px; border-top: 1px solid var(--border-color); }
-    .form-field { display: flex; flex-direction: column; gap: 3px; }
-    .form-field label { color: var(--text-dim); font-size: 0.7em; text-transform: uppercase; letter-spacing: 1px; font-family: 'Cinzel', serif; }
-    .form-field input { padding: 7px 10px; background: var(--bg-box-solid); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 3px; font-size: 0.95em; font-family: 'Crimson Text', serif; }
+    .qty-display { min-width: 26px; text-align: center; font-weight: 700; color: var(--text-main); font-family: 'Cinzel', serif; font-size: 1em; }
+    .add-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; padding-top: 12px; border-top: 1px solid var(--border-color); }
+    .form-field { display: flex; flex-direction: column; gap: 4px; }
+    .form-field label { color: var(--text-dim); font-size: 0.68em; text-transform: uppercase; letter-spacing: 1.5px; font-family: 'Cinzel', serif; }
+    .form-field input { padding: 10px; background: var(--bg-box-solid); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 4px; font-size: 16px; font-family: 'Crimson Text', serif; min-height: 44px; width: 100%; }
     .form-field input:focus { border-color: var(--accent); outline: none; }
-    .remove-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.1em; padding: 2px 6px; transition: color 0.2s; }
+    .remove-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.2em; padding: 8px 10px; transition: color 0.2s; min-width: 40px; min-height: 40px; }
     .remove-btn:hover { color: var(--danger-light); }
-    .add-btn-sm { padding: 7px 14px; border: 1px solid var(--border-color); border-radius: 3px; background: var(--bg-box-solid); color: var(--text-sub); font-weight: 700; cursor: pointer; font-family: 'Cinzel', serif; font-size: 0.8em; letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s; }
+    .add-btn-sm { padding: 11px 16px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-box-solid); color: var(--text-sub); font-weight: 700; cursor: pointer; font-family: 'Cinzel', serif; font-size: 0.78em; letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s; min-height: 44px; }
     .add-btn-sm:hover { border-color: var(--accent); color: var(--accent); }
     .traits-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-    @media (max-width: 550px) { .traits-grid { grid-template-columns: 1fr; } }
-    .trait-column h3 { font-family: 'Cinzel', serif; font-weight: 700; color: var(--text-sub); font-size: 0.8em; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+    .trait-column h3 { font-family: 'Cinzel', serif; font-weight: 700; color: var(--text-sub); font-size: 0.76em; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 9px; text-align: center; }
     .trait-column.problems h3 { color: var(--danger); }
     .trait-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
-    .trait-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-box-solid); border: 1px solid var(--border-color); border-radius: 3px; padding: 6px 10px; }
+    .trait-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-box-solid); border: 1px solid var(--border-color); border-radius: 4px; padding: 6px 10px; }
     .trait-item-text { color: var(--text-main); font-size: 0.95em; flex: 1; }
     .trait-add-row { display: flex; gap: 6px; }
-    .trait-add-row input { flex: 1; padding: 6px 10px; background: var(--bg-box-solid); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 3px; font-size: 0.9em; font-family: 'Crimson Text', serif; }
+    .trait-add-row input { flex: 1; min-width: 0; padding: 10px; background: var(--bg-box-solid); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 4px; font-size: 16px; font-family: 'Crimson Text', serif; min-height: 44px; }
     .trait-add-row input:focus { border-color: var(--accent); outline: none; }
-    .trait-add-btn { background: var(--bg-box-solid); color: var(--text-sub); border: 1px solid var(--border-color); border-radius: 3px; padding: 6px 12px; font-weight: 700; cursor: pointer; font-size: 0.9em; transition: all 0.2s; font-family: 'Cinzel', serif; }
+    .trait-add-btn { background: var(--bg-box-solid); color: var(--text-sub); border: 1px solid var(--border-color); border-radius: 4px; padding: 6px 16px; font-weight: 700; cursor: pointer; font-size: 1.1em; transition: all 0.2s; font-family: 'Cinzel', serif; min-height: 44px; min-width: 48px; }
     .trait-add-btn:hover { border-color: var(--accent); color: var(--accent); }
     .legend { display: flex; justify-content: center; gap: 25px; margin-top: 18px; padding: 10px; font-size: 0.9em; }
     .legend-item { display: flex; align-items: center; gap: 8px; color: var(--text-sub); }
-    .legend-box { width: 20px; height: 20px; border-radius: 3px; }
+    .legend-box { width: 20px; height: 20px; border-radius: 4px; }
     .legend-box.shock { background: var(--shock-color); } .legend-box.killing { background: var(--killing-color); }
-    .controls { display: flex; gap: 10px; margin-top: 25px; justify-content: center; flex-wrap: wrap; }
-    .controls button { padding: 10px 24px; border: 1px solid; border-radius: 3px; font-size: 0.8em; font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-family: 'Cinzel', serif; letter-spacing: 1px; }
+    .controls { display: flex; gap: 10px; margin-top: 24px; justify-content: center; flex-wrap: wrap; }
+    .controls button { padding: 13px 24px; border: 1px solid; border-radius: 4px; font-size: 0.78em; font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-family: 'Cinzel', serif; letter-spacing: 1px; min-height: 46px; }
     .controls button:hover { filter: brightness(1.15); }
     .reset-btn { background: transparent; color: var(--danger-light); border-color: var(--danger); }
-    .reset-btn:hover { background: rgba(160,48,48,0.1); }
+    .reset-btn:hover { background: rgba(160,48,48,0.12); }
     .reset-all-btn { background: transparent; color: var(--text-dim); border-color: var(--border-color); }
     .reset-all-btn:hover { background: rgba(255,255,255,0.03); color: var(--text-sub); }
     .divider { width: 100%; height: 1px; margin: 20px 0; background: linear-gradient(90deg, transparent, var(--border-color), transparent); }
     .empty-state { text-align: center; color: var(--text-dim); font-style: italic; padding: 12px 0; font-size: 0.95em; }
+    .footer-note { text-align: center; color: var(--text-dim); font-size: 0.74em; letter-spacing: 2px; font-family: 'Cinzel', serif; text-transform: uppercase; margin-top: 22px; opacity: 0.7; }
+    .credit-note { text-align: center; color: var(--text-dim); font-size: 0.66em; margin-top: 10px; opacity: 0.5; font-style: italic; line-height: 1.6; }
+
+    @media (max-width: 700px) {
+      .app-wrapper { padding: 10px 8px calc(16px + env(safe-area-inset-bottom)); }
+      .container { padding: 26px 13px 24px; border-radius: 6px; }
+      .container::before { inset: 5px; }
+      h1 { font-size: 1.5em; letter-spacing: 2px; }
+      .crest-main { width: 58px; height: 58px; }
+      .crest-watermark { width: 165px; height: 165px; top: -16px; }
+      .subtitle { font-size: 0.66em; letter-spacing: 3px; }
+      .flourish::before, .flourish::after { width: 55px; }
+      .char-name-input { font-size: 1.25em; }
+      .theme-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .dice-grid { grid-template-columns: 1fr; }
+      .traits-grid { grid-template-columns: 1fr; }
+      .hit-location { padding: 14px 12px; }
+      .box { width: 44px; height: 44px; font-size: 0.95em; }
+      .die { width: 50px; height: 54px; }
+      .quick-chip { width: 44px; height: 44px; font-size: 1em; }
+      .pool-num { font-size: 2.9em; }
+      .step-btn { width: 62px; height: 62px; font-size: 1.9em; }
+      .form-field { flex: 1 1 100% !important; }
+      .add-btn-sm { flex: 1 1 100%; }
+      .controls button { flex: 1 1 100%; }
+      .location-header { flex-direction: column; align-items: flex-start; }
+      .ar-block { align-items: flex-start; }
+      .ar-source { text-align: left; max-width: 100%; }
+      .armor-summary { grid-template-columns: repeat(3, 1fr); }
+      .equip-toggle { flex: 1 1 100%; }
+      .gear-tab { flex: 1 1 100%; max-width: none; }
+      .mw-dmg { flex: 1 1 100%; text-align: center; }
+    }
+    @media (max-width: 380px) {
+      .theme-grid { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .die.rolling, .die.landed, .die-wrap.is-match::after { animation: none !important; }
+      .notification-banner { animation: none; }
+    }
   </style>
 </head>
 <body>
@@ -166,10 +641,9 @@
     var defined = React;
     var useState = defined.useState;
     var useEffect = defined.useEffect;
-
+    var useRef = defined.useRef;
     var save = function(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} };
     var load = function(key, fb) { try { var v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : fb; } catch(e) { return fb; } };
-
     var rollAndMatch = function(n) {
       var results = Array(n).fill(0).map(function() { return Math.floor(Math.random() * 10) + 1; });
       var counts = {};
@@ -180,11 +654,149 @@
         .sort(function(a, b) { return b.width !== a.width ? b.width - a.width : b.height - a.height; });
       return { results: results, matches: matches };
     };
+    var CROSS = '\u2715';
+    var MINUS = '\u2212';
+    var DARROW = '\u25BC';
+    var MDASH = '\u2014';
+    var DIAMOND = '\u25C6';
+    var RARROW = '\u2192';
+    var SHIELD = '\u26E8';
+    var SWORDS = '\u2694';
+    var STAR_ON = '\u2605';
+    var STAR_OFF = '\u2606';
+    var uid = function() { return Date.now() + Math.floor(Math.random() * 100000); };
 
-    var CROSS = String.fromCharCode(10005);
-    var MINUS = String.fromCharCode(8722);
-    var DARROW = String.fromCharCode(9660);
-    var MDASH = String.fromCharCode(8212);
+    var CREST_SVG = {
+      horde: '<rect x="45" y="6" width="10" height="88" rx="5"/> <circle cx="50" cy="90" r="7"/> <path d="M46 24 Q26 14 10 12 Q-2 36 10 60 Q26 56 46 48 Z"/> <path d="M54 24 Q74 14 90 12 Q102 36 90 60 Q74 56 54 48 Z"/> <rect x="37" y="47" width="26" height="10" rx="5"/>',
+      alliance: '<path d="M50 5 L88 19 L88 50 Q88 80 50 96 Q12 80 12 50 L12 19 Z" fill="none" stroke="currentColor" stroke-width="8" stroke-linejoin="round"/> <path d="M50 27 L71 42 L71 54 L50 39 L29 54 L29 42 Z"/> <path d="M50 53 L71 68 L71 80 L50 65 L29 80 L29 68 Z"/>',
+      orc: '<rect x="45" y="6" width="10" height="88" rx="4" transform="rotate(34 50 50)"/> <rect x="45" y="6" width="10" height="88" rx="4" transform="rotate(-34 50 50)"/> <path d="M22 12 Q46 18 44 42 Q30 34 14 40 Q12 22 22 12 Z"/> <path d="M78 12 Q54 18 56 42 Q70 34 86 40 Q88 22 78 12 Z"/> <path d="M50 58 Q58 72 50 92 Q42 72 50 58 Z"/>',
+      forsaken: '<path d="M50 8 Q84 8 84 44 Q84 62 72 70 L72 86 L28 86 L28 70 Q16 62 16 44 Q16 8 50 8 Z" fill="none" stroke="currentColor" stroke-width="7"/> <circle cx="36" cy="42" r="8"/> <circle cx="64" cy="42" r="8"/> <path d="M50 54 L44 66 L56 66 Z"/> <rect x="40" y="74" width="5" height="12"/> <rect x="55" y="74" width="5" height="12"/>',
+      tauren: '<path d="M30 40 Q10 38 4 18 Q0 36 10 48 Q19 56 31 55 Z"/> <path d="M70 40 Q90 38 96 18 Q100 36 90 48 Q81 56 69 55 Z"/> <path d="M50 24 Q73 24 73 48 Q73 63 63 71 L59 86 Q50 92 41 86 L37 71 Q27 63 27 48 Q27 24 50 24 Z" fill="none" stroke="currentColor" stroke-width="7"/> <path d="M36 44 L47 48 L40 57 Z"/> <path d="M64 44 L53 48 L60 57 Z"/> <path d="M50 64 L45 74 L55 74 Z"/>',
+      bloodelf: '<circle cx="50" cy="19" r="7"/> <path d="M57 19 L68 22 L57 25 Z"/> <path d="M50 27 Q56 40 50 54 Q44 40 50 27 Z"/> <path d="M45 31 Q29 21 17 4 Q21 24 29 33 Q16 29 7 20 Q16 40 44 43 Z"/> <path d="M55 31 Q71 21 83 4 Q79 24 71 33 Q84 29 93 20 Q84 40 56 43 Z"/> <path d="M50 52 Q43 70 32 84 Q42 78 46 68 Q45 82 50 96 Q55 82 54 68 Q58 78 68 84 Q57 70 50 52 Z"/>',
+      goblin: '<circle cx="50" cy="32" r="26" fill="none" stroke="currentColor" stroke-width="7"/> <path d="M56 15 L38 37 L49 37 L43 52 L62 30 L51 30 Z"/> <rect x="22" y="66" width="56" height="9" rx="4.5"/> <rect x="15" y="79" width="70" height="9" rx="4.5"/> <rect x="22" y="92" width="56" height="8" rx="4"/>',
+      human: '<path d="M50 20 L84 31 L84 56 Q84 79 50 93 Q16 79 16 56 L16 31 Z" fill="none" stroke="currentColor" stroke-width="7"/> <rect x="46" y="4" width="8" height="14" rx="3"/> <circle cx="50" cy="5" r="5"/> <rect x="27" y="18" width="46" height="9" rx="4"/> <path d="M45 28 L55 28 L55 74 L50 86 L45 74 Z"/>',
+      dwarf: '<path d="M16 44 Q30 40 40 40 L74 40 Q86 40 84 50 Q80 58 68 58 L64 58 L68 78 L30 78 L36 58 Q22 56 16 44 Z"/> <rect x="24" y="82" width="52" height="9" rx="3"/> <path d="M34 10 L66 10 L66 22 L56 22 L56 34 L44 34 L44 22 L34 22 Z"/>',
+      nightelf: '<path d="M62 8 Q28 16 28 50 Q28 84 62 92 Q36 76 36 50 Q36 24 62 8 Z"/> <path d="M72 26 L77 42 L93 47 L77 52 L72 68 L67 52 L51 47 L67 42 Z"/> <circle cx="60" cy="76" r="5"/>',
+      gnome: '<path d="M50 6 L58 16 L70 12 L72 25 L85 28 L82 41 L93 48 L85 58 L92 70 L80 75 L80 88 L67 86 L59 96 L50 88 L41 96 L33 86 L20 88 L20 75 L8 70 L15 58 L7 48 L18 41 L15 28 L28 25 L30 12 L42 16 Z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/> <circle cx="50" cy="51" r="14" fill="none" stroke="currentColor" stroke-width="6"/> <path d="M50 38 L50 51 L60 58" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>',
+      pandaren: '<circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="7"/> <path d="M50 10 Q30 30 50 50 Q70 70 50 90 Q22 90 22 50 Q22 10 50 10 Z"/> <circle cx="50" cy="30" r="6" fill="none" stroke="currentColor" stroke-width="4"/> <circle cx="50" cy="70" r="6"/>'
+    };
+
+
+    /* Renders an original heraldic crest. Inline SVG, inherits color via currentColor. */
+    var Crest = function(props) {
+      var body = CREST_SVG[props.name] || CREST_SVG.horde;
+      return React.createElement('svg', {
+        className: 'crest-svg ' + (props.className || ''),
+        viewBox: '0 0 100 100',
+        width: '100%', height: '100%',
+        fill: 'currentColor',
+        role: 'img',
+        'aria-label': props.label || 'crest',
+        dangerouslySetInnerHTML: { __html: body }
+      });
+    };
+
+    /* ================= DAMAGE MODEL ================= */
+    var BASE_LABEL = { width: 'Width', height: 'Height', flat: 'Flat' };
+    var TYPE_LABEL = { killing: 'Killing', shock: 'Shocking' };
+
+    var formatPart = function(p) {
+      var mod = p.mod || 0;
+      if (p.base === 'flat') {
+        return (mod >= 0 ? mod : MINUS + Math.abs(mod)) + ' ' + TYPE_LABEL[p.type];
+      }
+      var s = BASE_LABEL[p.base];
+      if (mod > 0) s += '+' + mod;
+      else if (mod < 0) s += MINUS + Math.abs(mod);
+      return s + ' ' + TYPE_LABEL[p.type];
+    };
+    var formatDamage = function(parts) {
+      if (!parts || !parts.length) return 'No damage set';
+      return parts.map(formatPart).join(' + ');
+    };
+    var evalDamage = function(parts, width, height) {
+      var out = { killing: 0, shock: 0 };
+      (parts || []).forEach(function(p) {
+        var base = p.base === 'width' ? width : (p.base === 'height' ? height : 0);
+        var v = base + (p.mod || 0);
+        if (v < 0) v = 0;
+        out[p.type === 'shock' ? 'shock' : 'killing'] += v;
+      });
+      return out;
+    };
+    var formatDamageResult = function(d) {
+      var bits = [];
+      if (d.killing > 0) bits.push(d.killing + ' Killing');
+      if (d.shock > 0) bits.push(d.shock + ' Shock');
+      return bits.length ? bits.join(' + ') : 'no damage';
+    };
+    var mkPart = function(base, mod, type) { return { base: base, mod: mod, type: type }; };
+    var DAMAGE_FORMULAS = [
+      { label: 'W Killing', parts: [mkPart('width', 0, 'killing')] },
+      { label: 'W+1 Killing', parts: [mkPart('width', 1, 'killing')] },
+      { label: 'W+2 Killing', parts: [mkPart('width', 2, 'killing')] },
+      { label: 'W+3 Killing', parts: [mkPart('width', 3, 'killing')] },
+      { label: 'W Shocking', parts: [mkPart('width', 0, 'shock')] },
+      { label: 'W+1 Shocking', parts: [mkPart('width', 1, 'shock')] },
+      { label: 'W Shock +1 Kill', parts: [mkPart('width', 0, 'shock'), mkPart('flat', 1, 'killing')] },
+      { label: 'W Shock +2 Kill', parts: [mkPart('width', 0, 'shock'), mkPart('flat', 2, 'killing')] },
+      { label: 'W Kill +1 Shock', parts: [mkPart('width', 0, 'killing'), mkPart('flat', 1, 'shock')] },
+      { label: 'H Killing', parts: [mkPart('height', 0, 'killing')] }
+    ];
+
+    /* ---------------- THEMES ---------------- */
+    var THEME_DATA = {
+      horde:     ['Horde','Faction','#120808','#1a0a0a','rgba(20,10,10,0.92)','rgba(12,5,5,0.85)','#1a0e0e','#d4c4b0','#8a7a6a','#5a4a3a','#3a1a1a','#7a2a2a','#8a2020','#5a1515','#f0e0d0','#b08a3a','#1a1008','#f0e0d0','Lok\u2019tar Ogar'],
+      alliance:  ['Alliance','Faction','#0a1628','#112240','rgba(10,25,50,0.92)','rgba(5,15,35,0.85)','#0b1a30','#c8d6e5','#6b8299','#3d5570','#1a3a5c','#2a6cb0','#c5a44e','#8a7535','#0a0f1a','#2a6cb0','#e0e8f0','#0a0f1a','For the Alliance'],
+      orc:       ['Orc','Horde','#131409','#232711','rgba(19,20,9,0.92)','rgba(12,13,6,0.85)','#1b1d0d','#ddd8bd','#96916f','#64604a','#3a3f1e','#6b7c33','#8bb04d','#566f2f','#10130a','#b0442e','#f6e7e1','#10130a','Blood and Thunder'],
+      forsaken:  ['Forsaken','Horde','#0a0f0c','#121a16','rgba(10,15,12,0.92)','rgba(6,10,8,0.85)','#101713','#cfd6c8','#8a917f','#5b6154','#26312a','#4d6b3f','#9dc23f','#5e7726','#0b1108','#7a5f9e','#efe8f7','#0b1108','The Dark Lady watches over us'],
+      tauren:    ['Tauren','Horde','#16100a','#2a1f14','rgba(22,16,10,0.92)','rgba(14,10,6,0.85)','#201509','#e4d5c0','#a08a70','#6d5b47','#3f2c1b','#7d5530','#b8763a','#7a4d24','#170f07','#3fa8a0','#04201e','#170f07','Walk with the Earth Mother'],
+      bloodelf:  ['Blood Elf','Horde','#14060a','#2a0d15','rgba(20,6,10,0.92)','rgba(13,4,7,0.85)','#1c0910','#ecd6d6','#a8848a','#6f5259','#3d1620','#7d2635','#cf3a4e','#8a2130','#fbe9ea','#e3c063','#1a1206','#fbe9ea','Glory to the Sin\u2019dorei'],
+      goblin:    ['Goblin','Horde','#0f1408','#1c2610','rgba(15,20,8,0.92)','rgba(9,13,5,0.85)','#16200b','#dbe7bd','#93a377','#616f4c','#33421a','#6f8f24','#b7e02a','#6f8a18','#101405','#e08a1e','#1a1204','#101405','Time is money, friend'],
+      human:     ['Human','Alliance','#0b1526','#16305c','rgba(9,20,40,0.92)','rgba(6,14,30,0.85)','#0e2140','#d3dced','#7d92ad','#4a5f7d','#22406b','#3a72b8','#e0c56d','#94793a','#0b1220','#3b74c4','#eaf1fa','#0b1220','Stormwind stands'],
+      dwarf:     ['Dwarf','Alliance','#1a120b','#2a1d10','rgba(26,17,10,0.92)','rgba(16,10,6,0.85)','#241809','#e0d2bd','#9c876c','#6a5844','#4a3520','#8a5f2c','#d08a3c','#8a5a24','#1a1008','#7a8fa0','#10161c','#1a1008','Bronzebeard endures'],
+      nightelf:  ['Night Elf','Alliance','#0d0a1a','#1a1235','rgba(13,10,26,0.92)','rgba(8,6,18,0.85)','#150f28','#d6cfe8','#8d81a8','#5c5375','#2e2450','#5b4a94','#9b7fd4','#5f4a8a','#0d0a1a','#2fa39b','#061a18','#0d0a1a','Ash karath \u2014 by Elune'],
+      gnome:     ['Gnome','Alliance','#071a1c','#0d2f33','rgba(7,26,28,0.92)','rgba(4,18,20,0.85)','#0a262a','#cfe7e6','#7fa3a3','#52706f','#12464a','#1c7d80','#ff9f43','#a8642a','#1a1005','#29b6b0','#04201f','#1a1005','Cogs never sleep'],
+      pandaren:  ['Pandaren','Neutral','#0b1710','#14301f','rgba(11,23,16,0.92)','rgba(6,15,10,0.85)','#0e2417','#d8e6d5','#86a58e','#55705c','#1d4530','#37805a','#6fc48b','#3f7a55','#08160d','#cf5a3c','#fdeee8','#08160d','Slow down, drink deep']
+    };
+    var THEME_ORDER = ['horde','alliance','orc','forsaken','tauren','bloodelf','goblin','human','dwarf','nightelf','gnome','pandaren'];
+    var GROUP_ORDER = ['Faction', 'Horde', 'Alliance', 'Neutral'];
+    var buildTheme = function(a) {
+      return {
+        label: a[0], group: a[1], motto: a[18],
+        accentColor: a[12], shockColor: a[15], panelA: a[2], panelB: a[3],
+        textMain: a[7], textSub: a[8], tickText: a[14],
+        bg: 'linear-gradient(160deg, ' + a[2] + ' 0%, ' + a[3] + ' 50%, ' + a[2] + ' 100%)',
+        vars: {
+          '--bg-panel': a[4], '--bg-box': a[5], '--bg-box-solid': a[6],
+          '--text-main': a[7], '--text-sub': a[8], '--text-dim': a[9],
+          '--border-color': a[10], '--border-hover': a[11],
+          '--accent': a[12], '--accent-dim': a[13], '--btn-text': a[14],
+          '--shock-color': a[15], '--shock-text': a[16],
+          '--killing-color': a[12], '--killing-text': a[17],
+          '--panel-border': a[10], '--ornament': a[12]
+        }
+      };
+    };
+    var THEMES = {};
+    THEME_ORDER.forEach(function(k) { THEMES[k] = buildTheme(THEME_DATA[k]); });
+    var raceTheme = {
+      'Human': 'human', 'Dwarf': 'dwarf', 'Night Elf': 'nightelf', 'Gnome': 'gnome',
+      'Pandaren': 'pandaren', 'Orc': 'orc', 'Goblin': 'goblin', 'Tauren': 'tauren',
+      'Forsaken': 'forsaken', 'Blood Elf': 'bloodelf'
+    };
+    var raceEpithet = {
+      'Human': 'Stormwind stands \u2014 unbowed, unbroken.',
+      'Dwarf': 'Forged in the deeps of Ironforge.',
+      'Night Elf': 'A child of the stars, sworn to Elune.',
+      'Gnome': 'Brilliance measured in gears and gunpowder.',
+      'Pandaren': 'Wanderer of the mists, keeper of balance.',
+      'Orc': 'Strength honored, weakness crushed.',
+      'Goblin': 'Every risk has a price \u2014 and a profit.',
+      'Tauren': 'Guided by the Earth Mother\u2019s hand.',
+      'Forsaken': 'Death was only the beginning.',
+      'Blood Elf': 'Bearer of the Sunwell\u2019s undying light.'
+    };
 
     var baseHitboxes = { 'Head': 4, 'Torso': 10, 'Left Arm': 5, 'Right Arm': 5, 'Left Leg': 5, 'Right Leg': 5 };
     var raceModifiers = {
@@ -202,6 +814,38 @@
       'Leather Hard': { 'Head': 1, 'Torso': 1, 'Left Arm': 1, 'Right Arm': 1, 'Left Leg': 1, 'Right Leg': 1 }
     };
     var locationOrder = ['Head', 'Torso', 'Left Arm', 'Right Arm', 'Left Leg', 'Right Leg'];
+    var locAbbrev = { 'Head': 'HD', 'Torso': 'TO', 'Left Arm': 'L.ARM', 'Right Arm': 'R.ARM', 'Left Leg': 'L.LEG', 'Right Leg': 'R.LEG' };
+    var ALL_LOCS = function() { var o = {}; locationOrder.forEach(function(l) { o[l] = true; }); return o; };
+    var SOME_LOCS = function(list) { var o = {}; locationOrder.forEach(function(l) { o[l] = list.indexOf(l) >= 0; }); return o; };
+
+    var ARMOR_PRESETS = [
+      { name: 'Iron Cap', ar: 2, locs: SOME_LOCS(['Head']) },
+      { name: 'Full Helm', ar: 3, locs: SOME_LOCS(['Head']) },
+      { name: 'Leather Jerkin', ar: 1, locs: SOME_LOCS(['Torso']) },
+      { name: 'Chain Shirt', ar: 2, locs: SOME_LOCS(['Torso', 'Left Arm', 'Right Arm']) },
+      { name: 'Full Chain', ar: 2, locs: ALL_LOCS() },
+      { name: 'Breastplate', ar: 3, locs: SOME_LOCS(['Torso']) },
+      { name: 'Full Plate', ar: 3, locs: ALL_LOCS() },
+      { name: 'Vambraces', ar: 2, locs: SOME_LOCS(['Left Arm', 'Right Arm']) },
+      { name: 'Greaves', ar: 2, locs: SOME_LOCS(['Left Leg', 'Right Leg']) },
+      { name: 'Shield', ar: 2, locs: SOME_LOCS(['Left Arm']) }
+    ];
+    var WEAPON_QUALITIES = ['1-Hand', '2-Hand', 'Reach', 'Ranged', 'Thrown', 'Slow', 'Fast'];
+    var SOME_QUAL = function(list) { var o = {}; WEAPON_QUALITIES.forEach(function(q) { o[q] = list.indexOf(q) >= 0; }); return o; };
+    var WEAPON_PRESETS = [
+      { name: 'Dagger', dmg: [mkPart('width', 0, 'killing')], quals: SOME_QUAL(['1-Hand', 'Fast', 'Thrown']) },
+      { name: 'Sword', dmg: [mkPart('width', 1, 'killing')], quals: SOME_QUAL(['1-Hand']) },
+      { name: 'Battleaxe', dmg: [mkPart('width', 2, 'killing')], quals: SOME_QUAL(['2-Hand', 'Slow']) },
+      { name: 'Warhammer', dmg: [mkPart('width', 0, 'shock'), mkPart('flat', 2, 'killing')], quals: SOME_QUAL(['2-Hand', 'Slow']) },
+      { name: 'Mace', dmg: [mkPart('width', 0, 'shock'), mkPart('flat', 1, 'killing')], quals: SOME_QUAL(['1-Hand']) },
+      { name: 'Club', dmg: [mkPart('width', 0, 'shock')], quals: SOME_QUAL(['1-Hand']) },
+      { name: 'Spear', dmg: [mkPart('width', 1, 'killing')], quals: SOME_QUAL(['2-Hand', 'Reach']) },
+      { name: 'Polearm', dmg: [mkPart('width', 2, 'killing')], quals: SOME_QUAL(['2-Hand', 'Reach', 'Slow']) },
+      { name: 'Bow', dmg: [mkPart('width', 1, 'killing')], quals: SOME_QUAL(['2-Hand', 'Ranged']) },
+      { name: 'Crossbow', dmg: [mkPart('width', 2, 'killing')], quals: SOME_QUAL(['2-Hand', 'Ranged', 'Slow']) },
+      { name: 'Staff', dmg: [mkPart('width', 0, 'shock')], quals: SOME_QUAL(['2-Hand', 'Reach']) },
+      { name: 'Unarmed', dmg: [mkPart('width', 0, 'shock')], quals: SOME_QUAL(['Fast']) }
+    ];
 
     var CollapsibleSection = function(props) {
       var res = useState(function() { return load('reign_section_' + props.id, props.defaultOpen !== false); });
@@ -210,39 +854,462 @@
       return React.createElement('div', {className: 'section'},
         React.createElement('div', {className: 'section-header', onClick: function() { setOpen(!open); }},
           React.createElement('h2', {className: 'section-title'},
-            props.title, ' ', React.createElement('span', {className: 'toggle-arrow' + (open ? ' open' : '')}, DARROW)
+            React.createElement('span', {className: 'sect-diamond'}, DIAMOND),
+            props.title,
+            React.createElement('span', {className: 'sect-diamond'}, DIAMOND),
+            React.createElement('span', {className: 'toggle-arrow' + (open ? ' open' : '')}, DARROW)
           )
         ),
         React.createElement('div', {className: 'section-body' + (open ? ' open' : '')}, props.children)
       );
     };
 
-    var DiceRoller = function(props) {
-      var s1 = useState(props.healingMode ? 3 : 5); var numDice = s1[0]; var setNumDice = s1[1];
-      var s2 = useState(null); var roll = s2[0]; var setRoll = s2[1];
-      return React.createElement('div', {className: 'module-card'},
-        React.createElement('h2', {className: 'section-title', style: {fontSize: '0.95em', marginBottom: '10px'}}, props.label),
-        React.createElement('div', {className: 'input-section'},
-          React.createElement('label', null, 'Dice:'),
-          React.createElement('input', {type: 'number', min: '1', max: '20', value: numDice, onChange: function(e) { setNumDice(Math.max(1, parseInt(e.target.value) || 1)); }}),
-          React.createElement('button', {className: 'action-btn', onClick: function() { setRoll(rollAndMatch(numDice)); }}, 'Roll')
+    var ThemeTile = function(props) {
+      var t = props.theme;
+      var style = {
+        '--tile-bg-a': t.panelA, '--tile-bg-b': t.panelB,
+        '--tile-accent': t.accentColor, '--tile-tick': t.tickText,
+        '--tile-text': t.textMain, '--tile-sub': t.textSub,
+        '--tile-border': props.checked ? t.accentColor : 'rgba(255,255,255,0.10)'
+      };
+      return React.createElement('label', {
+          className: 'theme-tile' + (props.checked ? ' checked' : ''), style: style, title: t.motto
+        },
+        React.createElement('input', {
+          type: 'checkbox', checked: props.checked, onChange: props.onSelect, 'aria-label': t.label
+        }),
+        React.createElement('span', {className: 'tick'}),
+        React.createElement('span', {className: 'tile-body'},
+          React.createElement('span', {className: 'tile-name'}, t.label),
+          props.sub ? React.createElement('span', {className: 'tile-sub'}, props.sub) : null
         ),
+        React.createElement('span', {className: 'tile-crest'},
+          React.createElement(Crest, {name: props.crestKey, label: t.label + ' crest'}))
+      );
+    };
+
+    var ThemePicker = function(props) {
+      var groups = {};
+      THEME_ORDER.forEach(function(k) {
+        var g = THEMES[k].group;
+        if (!groups[g]) groups[g] = [];
+        groups[g].push(k);
+      });
+      return React.createElement('div', {className: 'theme-groups'},
+        React.createElement('div', null,
+          React.createElement('div', {className: 'theme-group-label'}, 'Follow My Race'),
+          React.createElement('div', {className: 'theme-grid'},
+            React.createElement(ThemeTile, {
+              theme: THEMES[props.autoKey], crestKey: props.autoKey, checked: props.mode === 'auto',
+              sub: props.race, onSelect: function() { props.onChange('auto'); }
+            })
+          )
+        ),
+        GROUP_ORDER.map(function(g) {
+          if (!groups[g]) return null;
+          return React.createElement('div', {key: g},
+            React.createElement('div', {className: 'theme-group-label'}, g),
+            React.createElement('div', {className: 'theme-grid'},
+              groups[g].map(function(k) {
+                return React.createElement(ThemeTile, {
+                  key: k, theme: THEMES[k], crestKey: k, checked: props.mode === k,
+                  onSelect: function() { props.onChange(k); }
+                });
+              })
+            )
+          );
+        })
+      );
+    };
+
+    /* ---------------- Dice ---------------- */
+    var DiceRoller = function(props) {
+      var storeKey = 'reign_pool_' + props.id;
+      var s1 = useState(function() {
+        var v = load(storeKey, props.healingMode ? 3 : 5);
+        return (typeof v === 'number' && v >= 1 && v <= 20) ? v : (props.healingMode ? 3 : 5);
+      });
+      var numDice = s1[0]; var setNumDice = s1[1];
+      var s2 = useState(null); var roll = s2[0]; var setRoll = s2[1];
+      var s3 = useState(0); var settled = s3[0]; var setSettled = s3[1];
+      var s4 = useState(0); var tick = s4[0]; var setTick = s4[1];
+      var timers = useRef([]);
+      useEffect(function() { save(storeKey, numDice); }, [numDice, storeKey]);
+      useEffect(function() { return function() { timers.current.forEach(clearTimeout); }; }, []);
+
+      var isRolling = roll !== null && settled < roll.results.length;
+
+      useEffect(function() {
+        if (!isRolling) return;
+        var iv = setInterval(function() { setTick(function(t) { return t + 1; }); }, 60);
+        return function() { clearInterval(iv); };
+      }, [isRolling]);
+
+      var doRoll = function() {
+        timers.current.forEach(clearTimeout);
+        timers.current = [];
+        var r = rollAndMatch(numDice);
+        setRoll(r);
+        setSettled(0);
+        for (var i = 0; i < numDice; i++) {
+          (function(idx) {
+            timers.current.push(setTimeout(function() {
+              setSettled(function(prev) { return Math.max(prev, idx + 1); });
+            }, 380 + idx * 55));
+          })(i);
+        }
+      };
+
+      var quick = [1,2,3,4,5,6,7,8,9,10];
+      var faceFor = function(i) {
+        if (roll && i < settled) return roll.results[i];
+        return Math.floor(Math.random() * 10) + 1;
+      };
+      var weap = props.mainWeapon;
+
+      return React.createElement('div', {className: 'module-card'},
+        React.createElement('h2', {className: 'section-title', style: {fontSize: '0.92em', marginBottom: '14px'}}, props.label),
+        React.createElement('div', {className: 'stepper'},
+          React.createElement('button', {className: 'step-btn', type: 'button', 'aria-label': 'Remove a die',
+            disabled: numDice <= 1, onClick: function() { setNumDice(Math.max(1, numDice - 1)); }}, MINUS),
+          React.createElement('div', {className: 'pool-display'},
+            React.createElement('div', {className: 'pool-num'}, numDice),
+            React.createElement('div', {className: 'pool-cap'}, numDice === 1 ? 'die' : 'dice')
+          ),
+          React.createElement('button', {className: 'step-btn', type: 'button', 'aria-label': 'Add a die',
+            disabled: numDice >= 20, onClick: function() { setNumDice(Math.min(20, numDice + 1)); }}, '+')
+        ),
+        React.createElement('div', {className: 'quick-row'},
+          quick.map(function(n) {
+            return React.createElement('button', {
+              key: n, type: 'button',
+              className: 'quick-chip' + (numDice === n ? ' active' : ''),
+              onClick: function() { setNumDice(n); }
+            }, n);
+          })
+        ),
+        React.createElement('button', {className: 'roll-btn', type: 'button', onClick: doRoll, disabled: isRolling},
+          isRolling ? 'Rolling\u2026' : ((roll ? 'Roll Again ' + MDASH + ' ' : 'Roll ') + numDice + 'd')),
         roll ? React.createElement('div', null,
-          React.createElement('div', {className: 'all-dice'},
+          React.createElement('div', {className: 'dice-tray'},
             roll.results.map(function(d, i) {
-              return React.createElement('div', {key: i, className: 'die' + (roll.matches.some(function(m) { return m.height === d; }) ? ' matched' : '')}, d);
+              var done = i < settled;
+              var isMatch = done && roll.matches.some(function(m) { return m.height === d; });
+              return React.createElement('div', {key: i, className: 'die-wrap' + (isMatch ? ' is-match' : '')},
+                React.createElement('div', {
+                  className: 'die' + (done ? ' landed' : ' rolling') + (isMatch ? ' matched' : ''),
+                  style: done ? null : {animationDelay: (i * 0.05) + 's'}
+                },
+                  React.createElement('div', {className: 'die-inner'}, faceFor(i))
+                )
+              );
             })
           ),
-          React.createElement('div', {className: 'matches-section'},
-            roll.matches.length > 0
-              ? roll.matches.map(function(m, i) {
-                  return props.healingMode
-                    ? React.createElement('span', {key: i, className: 'healing-result'}, 'Set ' + m.width + 'x' + m.height + ' ' + MDASH + ' Heals ' + m.width + ' Shock or converts 1 Killing to Shocking')
-                    : React.createElement('span', {key: i, className: 'match-result'}, m.width + 'x' + m.height);
-                })
-              : React.createElement('span', {className: 'no-match'}, props.healingMode ? 'No healing sets' : 'No matches')
-          )
+          isRolling
+            ? React.createElement('div', {className: 'roll-status'}, 'The bones are in the air\u2026')
+            : React.createElement('div', {className: 'matches-section'},
+                roll.matches.length > 0
+                  ? roll.matches.map(function(m, i) {
+                      if (props.healingMode) {
+                        return React.createElement('span', {key: i, className: 'healing-result'},
+                          'Set ' + m.width + 'x' + m.height + ' ' + MDASH + ' Heals ' + m.width + ' Shock or converts 1 Killing to Shocking');
+                      }
+                      return React.createElement('div', {key: i, style: {display: 'inline-block', margin: '3px'}},
+                        React.createElement('span', {className: 'match-result'}, m.width + 'x' + m.height),
+                        weap && weap.dmg && weap.dmg.length
+                          ? React.createElement('span', {className: 'dmg-result'},
+                              weap.name + ': ',
+                              React.createElement('b', null, formatDamageResult(evalDamage(weap.dmg, m.width, m.height)))
+                            )
+                          : null
+                      );
+                    })
+                  : React.createElement('span', {className: 'no-match'}, props.healingMode ? 'No healing sets' : 'No matches')
+              )
         ) : null
+      );
+    };
+
+    /* ---------------- Damage builder ---------------- */
+    var DamageBuilder = function(props) {
+      var parts = props.parts || [];
+      var setParts = props.onChange;
+      var updatePart = function(i, patch) {
+        setParts(parts.map(function(p, idx) { return idx === i ? Object.assign({}, p, patch) : p; }));
+      };
+      return React.createElement('div', null,
+        React.createElement('div', {className: 'dmg-preview'},
+          React.createElement('span', {className: 'dmg-preview-label'}, 'Damage'),
+          React.createElement('span', {className: 'dmg-preview-text'}, formatDamage(parts))
+        ),
+        parts.map(function(p, i) {
+          return React.createElement('div', {key: i, className: 'dmg-part'},
+            React.createElement('div', {className: 'dmg-part-row'},
+              React.createElement('div', {className: 'dmg-seg'},
+                ['width', 'height', 'flat'].map(function(b) {
+                  return React.createElement('button', {
+                    key: b, type: 'button', className: 'seg-chip' + (p.base === b ? ' on' : ''),
+                    onClick: function() { updatePart(i, {base: b}); }
+                  }, BASE_LABEL[b]);
+                })
+              ),
+              React.createElement('div', {className: 'mod-stepper'},
+                React.createElement('button', {className: 'ar-btn', type: 'button', 'aria-label': 'Lower modifier',
+                  onClick: function() { updatePart(i, {mod: Math.max(-9, (p.mod || 0) - 1)}); }}, MINUS),
+                React.createElement('span', {className: 'mod-val'},
+                  p.base === 'flat'
+                    ? (p.mod || 0)
+                    : ((p.mod || 0) > 0 ? '+' + p.mod : ((p.mod || 0) < 0 ? MINUS + Math.abs(p.mod) : '\u00B10'))),
+                React.createElement('button', {className: 'ar-btn', type: 'button', 'aria-label': 'Raise modifier',
+                  onClick: function() { updatePart(i, {mod: Math.min(9, (p.mod || 0) + 1)}); }}, '+')
+              ),
+              React.createElement('div', {className: 'dmg-seg'},
+                React.createElement('button', {
+                  type: 'button', className: 'seg-chip kill' + (p.type === 'killing' ? ' on' : ''),
+                  onClick: function() { updatePart(i, {type: 'killing'}); }
+                }, 'Killing'),
+                React.createElement('button', {
+                  type: 'button', className: 'seg-chip shock' + (p.type === 'shock' ? ' on' : ''),
+                  onClick: function() { updatePart(i, {type: 'shock'}); }
+                }, 'Shocking')
+              ),
+              parts.length > 1
+                ? React.createElement('button', {className: 'remove-btn', 'aria-label': 'Remove component',
+                    onClick: function() { setParts(parts.filter(function(_, idx) { return idx !== i; })); }}, CROSS)
+                : null
+            )
+          );
+        }),
+        React.createElement('button', {
+          className: 'dmg-add-btn', type: 'button',
+          onClick: function() { setParts(parts.concat([mkPart('flat', 1, parts.length && parts[0].type === 'killing' ? 'shock' : 'killing')])); }
+        }, '+ Add Damage Component'),
+        React.createElement('div', {className: 'dmg-formula-row'},
+          DAMAGE_FORMULAS.map(function(f) {
+            return React.createElement('button', {
+              key: f.label, type: 'button', className: 'formula-chip',
+              onClick: function() { setParts(f.parts.map(function(p) { return Object.assign({}, p); })); }
+            }, f.label);
+          })
+        )
+      );
+    };
+
+    /* ---------------- Shared gear card ---------------- */
+    var GearCard = function(props) {
+      var g = props.gear;
+      var isArmor = props.kind === 'armor';
+      var patch = function(p) { props.onUpdate(g.id, p); };
+      return React.createElement('div', {
+          className: 'gear-card ' + (g.equipped ? 'on' : 'off') + (props.isPrimary ? ' primary' : '')
+        },
+        React.createElement('div', {className: 'gear-top'},
+          React.createElement('label', {className: 'equip-toggle'},
+            React.createElement('input', {
+              type: 'checkbox', checked: !!g.equipped,
+              onChange: function() { patch({equipped: !g.equipped}); },
+              'aria-label': 'Equip ' + g.name
+            }),
+            React.createElement('span', {className: 'equip-tick'}),
+            React.createElement('input', {
+              className: 'gear-name-input', value: g.name,
+              onChange: function(e) { patch({name: e.target.value}); },
+              placeholder: isArmor ? 'Armor name' : 'Weapon name', 'aria-label': 'Name'
+            })
+          ),
+          !isArmor
+            ? React.createElement('button', {
+                type: 'button', className: 'star-btn' + (props.isPrimary ? ' on' : ''),
+                title: props.isPrimary ? 'Main weapon' : 'Set as main weapon',
+                'aria-label': 'Set as main weapon',
+                onClick: function() { props.onSetPrimary(props.isPrimary ? null : g.id); }
+              }, props.isPrimary ? STAR_ON : STAR_OFF)
+            : null,
+          isArmor
+            ? React.createElement('div', {className: 'gear-stat'},
+                React.createElement('span', {className: 'gear-stat-label'}, 'AR'),
+                React.createElement('button', {className: 'ar-btn', type: 'button', 'aria-label': 'Lower AR',
+                  onClick: function() { patch({ar: Math.max(0, (g.ar || 0) - 1)}); }}, MINUS),
+                React.createElement('span', {className: 'gear-stat-val'}, g.ar || 0),
+                React.createElement('button', {className: 'ar-btn', type: 'button', 'aria-label': 'Raise AR',
+                  onClick: function() { patch({ar: Math.min(10, (g.ar || 0) + 1)}); }}, '+')
+              )
+            : null,
+          React.createElement('button', {className: 'remove-btn', 'aria-label': 'Remove',
+            onClick: function() { props.onRemove(g.id); }}, CROSS)
+        ),
+        !isArmor
+          ? React.createElement(DamageBuilder, {
+              parts: g.dmg, onChange: function(np) { patch({dmg: np}); }
+            })
+          : null,
+        React.createElement('div', {className: 'tag-row'},
+          React.createElement('span', {className: 'tag-label'}, isArmor ? 'Covers' : 'Traits'),
+          (isArmor ? locationOrder : WEAPON_QUALITIES).map(function(t) {
+            var map = isArmor ? (g.locs || {}) : (g.quals || {});
+            return React.createElement('button', {
+              key: t, type: 'button', className: 'tag-chip' + (map[t] ? ' on' : ''),
+              onClick: function() {
+                var nm = Object.assign({}, map); nm[t] = !nm[t];
+                patch(isArmor ? {locs: nm} : {quals: nm});
+              }
+            }, isArmor ? locAbbrev[t] : t);
+          })
+        ),
+        React.createElement('input', {
+          className: 'gear-notes', value: g.notes || '',
+          onChange: function(e) { patch({notes: e.target.value}); },
+          placeholder: isArmor ? 'Notes \u2014 e.g. noisy, heavy, enchanted' : 'Notes \u2014 e.g. reach 2, ignores 1 AR',
+          'aria-label': 'Notes'
+        })
+      );
+    };
+
+    /* ---------------- Unified Armory ---------------- */
+    var Armory = function(props) {
+      var s = useState('weapons'); var tab = s[0]; var setTab = s[1];
+      var s2 = useState(''); var custom = s2[0]; var setCustom = s2[1];
+      var isArmor = tab === 'armor';
+      var list = isArmor ? props.armor : props.weapons;
+      var setList = isArmor ? props.onArmorChange : props.onWeaponsChange;
+
+      var updateItem = function(id, p) {
+        setList(list.map(function(x) { return x.id === id ? Object.assign({}, x, p) : x; }));
+      };
+      var removeItem = function(id) {
+        setList(list.filter(function(x) { return x.id !== id; }));
+        if (!isArmor && props.primaryId === id) props.onSetPrimary(null);
+      };
+      var addItem = function(preset) {
+        var base;
+        if (isArmor) {
+          base = {
+            id: uid(), equipped: true, notes: '',
+            name: preset ? preset.name : (custom.trim() || 'New Armor'),
+            ar: preset ? preset.ar : 1,
+            locs: preset ? Object.assign({}, preset.locs) : SOME_LOCS(['Torso'])
+          };
+        } else {
+          base = {
+            id: uid(), equipped: true, notes: '',
+            name: preset ? preset.name : (custom.trim() || 'New Weapon'),
+            dmg: preset ? preset.dmg.map(function(p) { return Object.assign({}, p); }) : [mkPart('width', 0, 'killing')],
+            quals: preset ? Object.assign({}, preset.quals) : SOME_QUAL(['1-Hand'])
+          };
+        }
+        setList(list.concat([base]));
+        if (!isArmor && !props.primaryId) props.onSetPrimary(base.id);
+        if (!preset) setCustom('');
+      };
+
+      var presets = isArmor ? ARMOR_PRESETS : WEAPON_PRESETS;
+
+      return React.createElement('div', null,
+        React.createElement('div', {className: 'gear-tabs'},
+          React.createElement('button', {
+            type: 'button', className: 'gear-tab' + (!isArmor ? ' active' : ''),
+            onClick: function() { setTab('weapons'); }
+          },
+            React.createElement('span', {className: 'gear-tab-glyph'}, SWORDS), 'Weapons',
+            React.createElement('span', {className: 'gear-count'}, '(' + props.weapons.length + ')')
+          ),
+          React.createElement('button', {
+            type: 'button', className: 'gear-tab' + (isArmor ? ' active' : ''),
+            onClick: function() { setTab('armor'); }
+          },
+            React.createElement('span', {className: 'gear-tab-glyph'}, SHIELD), 'Armor',
+            React.createElement('span', {className: 'gear-count'}, '(' + props.armor.length + ')')
+          )
+        ),
+
+        isArmor ? React.createElement('div', null,
+          React.createElement('div', {className: 'armor-mode-row'},
+            React.createElement('button', {
+              type: 'button', className: 'mode-chip' + (props.stack ? ' active' : ''),
+              onClick: function() { props.onStackChange(true); }
+            }, 'Armor Stacks'),
+            React.createElement('button', {
+              type: 'button', className: 'mode-chip' + (!props.stack ? ' active' : ''),
+              onClick: function() { props.onStackChange(false); }
+            }, 'Best Piece Only')
+          ),
+          React.createElement('div', {className: 'armor-summary'},
+            locationOrder.map(function(loc) {
+              var ar = props.arFor(loc);
+              return React.createElement('div', {key: loc, className: 'sum-cell' + (ar > 0 ? ' covered' : '')},
+                React.createElement('span', {className: 'sum-loc'}, locAbbrev[loc]),
+                React.createElement('span', {className: 'sum-ar'}, ar)
+              );
+            })
+          ),
+          React.createElement('div', {className: 'divider'})
+        ) : null,
+
+        React.createElement('div', {className: 'sub-head'}, isArmor ? 'Worn' : 'Carried'),
+        list.length > 0
+          ? list.map(function(g) {
+              return React.createElement(GearCard, {
+                key: g.id, gear: g, kind: isArmor ? 'armor' : 'weapon',
+                onUpdate: updateItem, onRemove: removeItem,
+                isPrimary: !isArmor && props.primaryId === g.id,
+                onSetPrimary: props.onSetPrimary
+              });
+            })
+          : React.createElement('div', {className: 'empty-state'},
+              isArmor ? 'No armor worn \u2014 bold, or foolish' : 'Unarmed \u2014 fists it is'),
+
+        React.createElement('div', {className: 'divider'}),
+        React.createElement('div', {className: 'sub-head'}, 'Quick Add'),
+        React.createElement('div', {className: 'preset-row'},
+          presets.map(function(p) {
+            return React.createElement('button', {
+              key: p.name, type: 'button', className: 'preset-btn',
+              onClick: function() { addItem(p); }
+            }, '+ ' + p.name);
+          })
+        ),
+        React.createElement('div', {className: 'add-form'},
+          React.createElement('div', {className: 'form-field', style: {flex: '1 1 180px'}},
+            React.createElement('label', null, isArmor ? 'Custom Armor' : 'Custom Weapon'),
+            React.createElement('input', {
+              value: custom, onChange: function(e) { setCustom(e.target.value); },
+              onKeyDown: function(e) { if (e.key === 'Enter') addItem(null); },
+              placeholder: isArmor ? 'Runed Pauldrons' : 'Ashkandi, Greatsword of the Brotherhood'
+            })
+          ),
+          React.createElement('button', {className: 'add-btn-sm', onClick: function() { addItem(null); },
+            style: {alignSelf: 'flex-end', marginBottom: '1px'}}, 'Add')
+        ),
+        React.createElement('div', {className: 'note-line'},
+          isArmor
+            ? 'Preset AR values are starting points \u2014 tap ' + MINUS + '/+ to match your table. Coverage feeds the Wound Tracker.'
+            : 'Build any damage line from components: pick Width, Height or Flat, set the modifier, choose Killing or Shocking. Tap ' + STAR_ON + ' to make a weapon your main.'
+        )
+      );
+    };
+
+    var MainWeaponBanner = function(props) {
+      var w = props.weapon;
+      if (!w) {
+        return React.createElement('div', {className: 'mw-empty'},
+          'No main weapon chosen \u2014 star one in the Armory to pin it here');
+      }
+      var traits = Object.keys(w.quals || {}).filter(function(k) { return w.quals[k]; });
+      return React.createElement('div', {className: 'mainweap-banner'},
+        React.createElement('span', {className: 'mw-crest'},
+          React.createElement(Crest, {name: props.crestKey, label: ''})),
+        React.createElement('span', {className: 'mw-star'}, STAR_ON),
+        React.createElement('div', {className: 'mw-body'},
+          React.createElement('span', {className: 'mw-label'}, 'Main Weapon'),
+          React.createElement('span', {className: 'mw-name'}, w.name),
+          traits.length
+            ? React.createElement('span', {className: 'mw-traits'}, traits.join('  ' + DIAMOND + '  '))
+            : null
+        ),
+        React.createElement('span', {className: 'mw-dmg'}, formatDamage(w.dmg)),
+        props.canCycle
+          ? React.createElement('button', {className: 'mw-switch', type: 'button', onClick: props.onCycle}, 'Switch')
+          : null
       );
     };
 
@@ -255,17 +1322,28 @@
         else nw[i] = null;
         props.onWoundChange(props.name, nw);
       };
+      var total = props.arTotal;
       return React.createElement('div', {className: 'hit-location' + (isCrippled ? ' crippled' : '')},
         React.createElement('div', {className: 'location-header'},
           React.createElement('div', {className: 'location-left'},
             React.createElement('span', {className: 'location-name'}, props.name),
-            isCrippled ? React.createElement('span', {className: 'crippled-warning'}, 'Crippled') : null,
-            React.createElement('div', {className: 'armor-badge'},
-              'AR',
-              React.createElement('input', {type: 'number', min: '0', max: '20', value: props.armor, onChange: function(e) { props.onArmorChange(props.name, Math.max(0, parseInt(e.target.value) || 0)); }})
-            )
+            React.createElement('span', {className: 'location-number'}, props.number),
+            isCrippled ? React.createElement('span', {className: 'crippled-warning'}, 'Crippled') : null
           ),
-          React.createElement('div', {className: 'location-number'}, props.number)
+          React.createElement('div', {className: 'ar-block'},
+            React.createElement('div', {className: 'ar-shield' + (total > 0 ? ' armored' : '')},
+              React.createElement('span', {className: 'ar-icon'}, SHIELD),
+              React.createElement('span', {className: 'ar-cap'}, 'AR'),
+              React.createElement('span', {className: 'ar-total'}, total),
+              React.createElement('div', {className: 'ar-adjust'},
+                React.createElement('button', {className: 'ar-btn', type: 'button', 'aria-label': 'Lower bonus AR',
+                  onClick: function() { props.onArmorChange(props.name, props.bonus - 1); }}, MINUS),
+                React.createElement('button', {className: 'ar-btn', type: 'button', 'aria-label': 'Raise bonus AR',
+                  onClick: function() { props.onArmorChange(props.name, props.bonus + 1); }}, '+')
+              )
+            ),
+            props.arSource ? React.createElement('div', {className: 'ar-source'}, props.arSource) : null
+          )
         ),
         React.createElement('div', {className: 'boxes'},
           props.wounds.map(function(ws, i) {
@@ -277,54 +1355,11 @@
       );
     };
 
-    var WeaponManager = function(props) {
-      var s = useState({name: '', damage: '', notes: ''}); var form = s[0]; var setForm = s[1];
-      var add = function() {
-        if (!form.name.trim()) return;
-        props.onChange(props.weapons.concat([{id: Date.now(), name: form.name, damage: form.damage, notes: form.notes}]));
-        setForm({name: '', damage: '', notes: ''});
-      };
-      var handleKey = function(e) { if (e.key === 'Enter') add(); };
-      return React.createElement('div', null,
-        props.weapons.length > 0
-          ? React.createElement('div', {className: 'item-list'},
-              props.weapons.map(function(w) {
-                return React.createElement('div', {key: w.id, className: 'item-card'},
-                  React.createElement('div', {className: 'item-info'},
-                    React.createElement('div', {className: 'item-name'}, w.name),
-                    React.createElement('div', {className: 'item-detail'},
-                      w.damage ? React.createElement('span', null, w.damage) : null,
-                      w.notes ? React.createElement('span', null, w.notes) : null
-                    )
-                  ),
-                  React.createElement('button', {className: 'remove-btn', onClick: function() { props.onChange(props.weapons.filter(function(x) { return x.id !== w.id; })); }}, CROSS)
-                );
-              })
-            )
-          : React.createElement('div', {className: 'empty-state'}, 'No weapons added'),
-        React.createElement('div', {className: 'add-form'},
-          React.createElement('div', {className: 'form-field', style: {flex: '1 1 100px'}},
-            React.createElement('label', null, 'Name'),
-            React.createElement('input', {value: form.name, onChange: function(e) { setForm({name: e.target.value, damage: form.damage, notes: form.notes}); }, onKeyDown: handleKey, placeholder: 'Ashkandi'})
-          ),
-          React.createElement('div', {className: 'form-field', style: {flex: '1 1 100px'}},
-            React.createElement('label', null, 'Damage'),
-            React.createElement('input', {value: form.damage, onChange: function(e) { setForm({name: form.name, damage: e.target.value, notes: form.notes}); }, onKeyDown: handleKey, placeholder: 'W+1 Killing'})
-          ),
-          React.createElement('div', {className: 'form-field', style: {flex: '1 1 130px'}},
-            React.createElement('label', null, 'Notes'),
-            React.createElement('input', {value: form.notes, onChange: function(e) { setForm({name: form.name, damage: form.damage, notes: e.target.value}); }, onKeyDown: handleKey, placeholder: 'Two-handed, Slow'})
-          ),
-          React.createElement('button', {className: 'add-btn-sm', onClick: add, style: {alignSelf: 'flex-end', marginBottom: '1px'}}, 'Add')
-        )
-      );
-    };
-
     var InventoryManager = function(props) {
       var s = useState({name: '', qty: '1', notes: ''}); var form = s[0]; var setForm = s[1];
       var add = function() {
         if (!form.name.trim()) return;
-        props.onChange(props.inventory.concat([{id: Date.now(), name: form.name, qty: Math.max(1, parseInt(form.qty) || 1), notes: form.notes}]));
+        props.onChange(props.inventory.concat([{id: uid(), name: form.name, qty: Math.max(1, parseInt(form.qty) || 1), notes: form.notes}]));
         setForm({name: '', qty: '1', notes: ''});
       };
       var handleKey = function(e) { if (e.key === 'Enter') add(); };
@@ -356,15 +1391,15 @@
                 );
               })
             )
-          : React.createElement('div', {className: 'empty-state'}, 'No items in inventory'),
+          : React.createElement('div', {className: 'empty-state'}, 'Your bags are empty'),
         React.createElement('div', {className: 'add-form'},
           React.createElement('div', {className: 'form-field', style: {flex: '1 1 130px'}},
             React.createElement('label', null, 'Item'),
             React.createElement('input', {value: form.name, onChange: function(e) { setForm({name: e.target.value, qty: form.qty, notes: form.notes}); }, onKeyDown: handleKey, placeholder: 'Healing Potion'})
           ),
-          React.createElement('div', {className: 'form-field', style: {flex: '0 0 60px'}},
+          React.createElement('div', {className: 'form-field', style: {flex: '0 0 76px'}},
             React.createElement('label', null, 'Qty'),
-            React.createElement('input', {value: form.qty, onChange: function(e) { setForm({name: form.name, qty: e.target.value, notes: form.notes}); }, onKeyDown: handleKey, style: {textAlign: 'center'}})
+            React.createElement('input', {value: form.qty, inputMode: 'numeric', pattern: '[0-9]*', onChange: function(e) { setForm({name: form.name, qty: e.target.value, notes: form.notes}); }, onKeyDown: handleKey, style: {textAlign: 'center'}})
           ),
           React.createElement('div', {className: 'form-field', style: {flex: '1 1 130px'}},
             React.createElement('label', null, 'Notes'),
@@ -379,7 +1414,7 @@
       var s = useState(''); var input = s[0]; var setInput = s[1];
       var add = function() {
         if (!input.trim()) return;
-        props.onChange(props.items.concat([{id: Date.now(), text: input.trim()}]));
+        props.onChange(props.items.concat([{id: uid(), text: input.trim()}]));
         setInput('');
       };
       var handleKey = function(e) { if (e.key === 'Enter') add(); };
@@ -403,29 +1438,64 @@
     };
 
     var App = function() {
-      var s0 = useState(function() { return load('reign_theme', 'alliance'); }); var theme = s0[0]; var setTheme = s0[1];
+      var s0 = useState(function() {
+        var v = load('reign_themeMode', 'horde');
+        return (v === 'auto' || THEMES[v]) ? v : 'horde';
+      }); var themeMode = s0[0]; var setThemeMode = s0[1];
       var s1 = useState(function() { var v = load('reign_charName', ''); return typeof v === 'string' ? v : ''; }); var charName = s1[0]; var setCharName = s1[1];
-      var s2 = useState(function() { var v = load('reign_race', 'Human'); return typeof v === 'string' && raceModifiers[v] ? v : 'Human'; }); var selectedRace = s2[0]; var setSelectedRace = s2[1];
+      var s2 = useState(function() { var v = load('reign_race', 'Orc'); return typeof v === 'string' && raceModifiers[v] ? v : 'Orc'; }); var selectedRace = s2[0]; var setSelectedRace = s2[1];
       var s3 = useState(function() { var v = load('reign_physAdvantages', []); return Array.isArray(v) ? v : []; }); var selectedAdvantages = s3[0]; var setSelectedAdvantages = s3[1];
       var s4 = useState(function() { var v = load('reign_xp', 0); return typeof v === 'number' ? v : 0; }); var xp = s4[0]; var setXP = s4[1];
       var s5 = useState(1); var xpStep = s5[0]; var setXpStep = s5[1];
-      var s6 = useState(function() { var v = load('reign_weapons', []); return Array.isArray(v) ? v : []; }); var weapons = s6[0]; var setWeapons = s6[1];
+
+      var s6 = useState(function() {
+        var v3 = load('reign_weaponsV3', null);
+        if (Array.isArray(v3)) return v3;
+        var v2 = load('reign_weaponsV2', null);
+        if (Array.isArray(v2)) {
+          return v2.map(function(w) {
+            return {
+              id: w.id || uid(), name: w.name || 'Weapon', equipped: w.equipped !== false,
+              dmg: [mkPart('width', w.dmg || 0, w.dtype === 'shock' ? 'shock' : 'killing')],
+              quals: w.quals || SOME_QUAL(['1-Hand']), notes: w.notes || ''
+            };
+          });
+        }
+        var v1 = load('reign_weapons', []);
+        if (Array.isArray(v1) && v1.length) {
+          return v1.map(function(w) {
+            return {
+              id: w.id || uid(), name: w.name || 'Weapon', equipped: true,
+              dmg: [mkPart('width', 0, 'killing')], quals: SOME_QUAL(['1-Hand']),
+              notes: [w.damage, w.notes].filter(Boolean).join(' \u2014 ')
+            };
+          });
+        }
+        return [];
+      }); var weapons = s6[0]; var setWeapons = s6[1];
+
+      var s14 = useState(function() { return load('reign_primaryWeapon', null); });
+      var primaryId = s14[0]; var setPrimaryId = s14[1];
+
       var s7 = useState(function() { var v = load('reign_inventory', []); return Array.isArray(v) ? v : []; }); var inventory = s7[0]; var setInventory = s7[1];
       var s8 = useState(function() { var v = load('reign_advantages', []); return Array.isArray(v) ? v : []; }); var advantages = s8[0]; var setAdvantages = s8[1];
       var s9 = useState(function() { var v = load('reign_problems', []); return Array.isArray(v) ? v : []; }); var problems = s9[0]; var setProblems = s9[1];
       var s10 = useState(function() {
         var v = load('reign_armor', null);
         return (v && typeof v === 'object' && !Array.isArray(v)) ? v : {'Head':0,'Torso':0,'Left Arm':0,'Right Arm':0,'Left Leg':0,'Right Leg':0};
-      }); var armor = s10[0]; var setArmor = s10[1];
+      }); var armorBonus = s10[0]; var setArmorBonus = s10[1];
+      var s12 = useState(function() { var v = load('reign_armorPieces', []); return Array.isArray(v) ? v : []; });
+      var armorPieces = s12[0]; var setArmorPieces = s12[1];
+      var s13 = useState(function() { var v = load('reign_armorStack', true); return typeof v === 'boolean' ? v : true; });
+      var armorStack = s13[0]; var setArmorStack = s13[1];
 
       var getTargetBoxes = function(loc, race, advs) {
         var raceMod = raceModifiers[race] ? (raceModifiers[race][loc] || 0) : 0;
         var advMod = advs.reduce(function(sum, a) { return sum + ((advantageModifiers[a] && advantageModifiers[a][loc]) || 0); }, 0);
         return Math.max(1, baseHitboxes[loc] + raceMod + advMod);
       };
-
       var getInitialHitLocations = function(race, advs) {
-        race = race || 'Human'; advs = advs || [];
+        race = race || 'Orc'; advs = advs || [];
         return {
           'Head': {number: '10', wounds: Array(getTargetBoxes('Head', race, advs)).fill(null)},
           'Torso': {number: '7-9', wounds: Array(getTargetBoxes('Torso', race, advs)).fill(null)},
@@ -435,24 +1505,61 @@
           'Right Leg': {number: '1', wounds: Array(getTargetBoxes('Right Leg', race, advs)).fill(null)}
         };
       };
-
       var s11 = useState(function() {
         var v = load('reign_wounds', null);
         if (v && typeof v === 'object' && v['Head'] && v['Torso']) return v;
         return getInitialHitLocations(selectedRace, selectedAdvantages);
       }); var hitLocations = s11[0]; var setHitLocations = s11[1];
 
-      useEffect(function() { save('reign_theme', theme); }, [theme]);
+      useEffect(function() { save('reign_themeMode', themeMode); }, [themeMode]);
       useEffect(function() { save('reign_charName', charName); }, [charName]);
       useEffect(function() { save('reign_race', selectedRace); }, [selectedRace]);
       useEffect(function() { save('reign_physAdvantages', selectedAdvantages); }, [selectedAdvantages]);
       useEffect(function() { save('reign_wounds', hitLocations); }, [hitLocations]);
-      useEffect(function() { save('reign_armor', armor); }, [armor]);
+      useEffect(function() { save('reign_armor', armorBonus); }, [armorBonus]);
+      useEffect(function() { save('reign_armorPieces', armorPieces); }, [armorPieces]);
+      useEffect(function() { save('reign_armorStack', armorStack); }, [armorStack]);
       useEffect(function() { save('reign_xp', xp); }, [xp]);
-      useEffect(function() { save('reign_weapons', weapons); }, [weapons]);
+      useEffect(function() { save('reign_weaponsV3', weapons); }, [weapons]);
+      useEffect(function() { save('reign_primaryWeapon', primaryId); }, [primaryId]);
       useEffect(function() { save('reign_inventory', inventory); }, [inventory]);
       useEffect(function() { save('reign_advantages', advantages); }, [advantages]);
       useEffect(function() { save('reign_problems', problems); }, [problems]);
+
+      var mainWeapon = weapons.filter(function(w) { return w.id === primaryId; })[0] || null;
+      var cycleMain = function() {
+        if (!weapons.length) return;
+        var idx = weapons.map(function(w) { return w.id; }).indexOf(primaryId);
+        setPrimaryId(weapons[(idx + 1) % weapons.length].id);
+      };
+
+      var piecesCovering = function(loc) {
+        return armorPieces.filter(function(p) { return p.equipped && p.locs && p.locs[loc]; });
+      };
+      var armorFromGear = function(loc) {
+        var vals = piecesCovering(loc).map(function(p) { return p.ar || 0; });
+        if (vals.length === 0) return 0;
+        if (armorStack) return vals.reduce(function(a, b) { return a + b; }, 0);
+        return Math.max.apply(null, vals);
+      };
+      var totalAR = function(loc) {
+        return Math.max(0, armorFromGear(loc) + ((armorBonus && armorBonus[loc]) || 0));
+      };
+      var arSourceText = function(loc) {
+        var names = piecesCovering(loc).map(function(p) { return p.name + ' ' + (p.ar || 0); });
+        var bonus = (armorBonus && armorBonus[loc]) || 0;
+        if (bonus !== 0) names.push((bonus > 0 ? '+' : MINUS) + Math.abs(bonus) + ' manual');
+        return names.length ? names.join('  ' + DIAMOND + '  ') : 'Unarmored';
+      };
+
+      var autoKey = raceTheme[selectedRace] || 'horde';
+      var activeKey = themeMode === 'auto' ? autoKey : themeMode;
+      var activeTheme = THEMES[activeKey] || THEMES.horde;
+      var wrapperStyle = Object.assign({background: activeTheme.bg}, activeTheme.vars);
+      useEffect(function() {
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute('content', activeTheme.vars['--bg-box-solid']);
+      }, [activeKey]);
 
       var headWounds = hitLocations['Head'] ? hitLocations['Head'].wounds : [];
       var torsoWounds = hitLocations['Torso'] ? hitLocations['Torso'].wounds : [];
@@ -461,7 +1568,6 @@
       var isDead = isAllKilling(headWounds) || isAllKilling(torsoWounds);
       var isKnockedOut = !isDead && isFull(headWounds);
       var hasPenalty = !isDead && !isKnockedOut && isFull(torsoWounds);
-
       var updateHitboxArrays = function(newRace, newAdvs) {
         setHitLocations(function(prev) {
           var updated = {};
@@ -477,52 +1583,66 @@
           return updated;
         });
       };
-
       var handleRaceChange = function(e) { var r = e.target.value; setSelectedRace(r); updateHitboxArrays(r, selectedAdvantages); };
       var handleAdvantageToggle = function(adv) {
         var na = selectedAdvantages.indexOf(adv) >= 0 ? selectedAdvantages.filter(function(a) { return a !== adv; }) : selectedAdvantages.concat([adv]);
         setSelectedAdvantages(na); updateHitboxArrays(selectedRace, na);
       };
 
-      return React.createElement('div', {className: 'app-wrapper theme-' + theme},
+      return React.createElement('div', {className: 'app-wrapper', style: wrapperStyle},
         React.createElement('div', {className: 'container'},
+          React.createElement('span', {className: 'corner tl'}, DIAMOND),
+          React.createElement('span', {className: 'corner tr'}, DIAMOND),
+          React.createElement('span', {className: 'corner bl'}, DIAMOND),
+          React.createElement('span', {className: 'corner br'}, DIAMOND),
+          React.createElement('div', {className: 'crest'},
+            React.createElement('div', {className: 'crest-watermark'},
+              React.createElement(Crest, {name: activeKey, label: ''})),
+            React.createElement('div', {className: 'crest-main'},
+              React.createElement(Crest, {name: activeKey, label: activeTheme.label + ' crest'}))
+          ),
           React.createElement('h1', null, 'Reign: Warcraft'),
           React.createElement('div', {className: 'subtitle'}, 'Character Tracker'),
+          React.createElement('div', {className: 'flourish'}, React.createElement('span', null, DIAMOND)),
 
-          React.createElement('div', {className: 'theme-toggle-container'},
-            React.createElement('span', {className: 'theme-label' + (theme === 'alliance' ? ' active' : '')}, 'Alliance'),
-            React.createElement('label', {className: 'switch'},
-              React.createElement('input', {type: 'checkbox', checked: theme === 'horde', onChange: function() { setTheme(theme === 'alliance' ? 'horde' : 'alliance'); }}),
-              React.createElement('span', {className: 'slider'})
-            ),
-            React.createElement('span', {className: 'theme-label' + (theme === 'horde' ? ' active' : '')}, 'Horde')
+          React.createElement(CollapsibleSection, {title: 'Banner & Colors', id: 'theme', defaultOpen: false},
+            React.createElement(ThemePicker, {mode: themeMode, autoKey: autoKey, race: selectedRace, onChange: setThemeMode})
           ),
 
-          React.createElement('input', {className: 'char-name-input', type: 'text', value: charName, onChange: function(e) { setCharName(e.target.value); }, placeholder: 'Character Name'}),
-
+          React.createElement('div', {className: 'char-name-wrap'},
+            React.createElement('input', {className: 'char-name-input', type: 'text', value: charName, onChange: function(e) { setCharName(e.target.value); }, placeholder: 'Character Name'}),
+            React.createElement('div', {className: 'race-epithet'}, raceEpithet[selectedRace] || activeTheme.motto)
+          ),
           isDead ? React.createElement('div', {className: 'notification-banner banner-dead'}, 'Dead') : null,
           isKnockedOut ? React.createElement('div', {className: 'notification-banner banner-ko'}, 'Knocked Out') : null,
           hasPenalty ? React.createElement('div', {className: 'notification-banner banner-penalty'}, 'Dazed ' + MDASH + ' 1d Penalty') : null,
-
           React.createElement('div', {className: 'xp-row'},
             React.createElement('span', {className: 'xp-label'}, 'Experience'),
             React.createElement('button', {className: 'xp-btn', onClick: function() { setXP(Math.max(0, xp - xpStep)); }}, MINUS),
             React.createElement('span', {className: 'xp-value'}, xp),
-            React.createElement('button', {className: 'xp-btn', onClick: function() { setXP(xp + xpStep); }}, '+'),
-            React.createElement('input', {className: 'xp-step', type: 'number', min: '1', value: xpStep, onChange: function(e) { setXpStep(Math.max(1, parseInt(e.target.value) || 1)); }, title: 'Step amount'})
+            React.createElement('button', {className: 'xp-btn', onClick: function() { setXP(xp + xpStep); }}, '+')
           ),
-
+          React.createElement('div', {className: 'step-group'},
+            [1, 5, 10].map(function(n) {
+              return React.createElement('button', {
+                key: n, type: 'button',
+                className: 'step-chip' + (xpStep === n ? ' active' : ''),
+                onClick: function() { setXpStep(n); }
+              }, '+' + n);
+            })
+          ),
           React.createElement('div', {className: 'divider'}),
 
           React.createElement(CollapsibleSection, {title: 'Dice', id: 'dice', defaultOpen: true},
             React.createElement('div', {className: 'dice-grid'},
-              React.createElement(DiceRoller, {label: 'Roll', healingMode: false}),
-              React.createElement(DiceRoller, {label: 'Healing', healingMode: true})
+              React.createElement(DiceRoller, {id: 'main', label: 'Roll', healingMode: false, mainWeapon: mainWeapon}),
+              React.createElement(DiceRoller, {id: 'heal', label: 'Healing', healingMode: true})
             )
           ),
-
           React.createElement(CollapsibleSection, {title: 'Race & Modifiers', id: 'race', defaultOpen: true},
             React.createElement('div', {className: 'controls-row'},
+              React.createElement('span', {className: 'race-crest-inline'},
+                React.createElement(Crest, {name: autoKey, label: selectedRace + ' crest'})),
               React.createElement('label', null, 'Race'),
               React.createElement('select', {value: selectedRace, onChange: handleRaceChange},
                 Object.keys(raceModifiers).map(function(r) { return React.createElement('option', {key: r, value: r}, r); })
@@ -530,28 +1650,35 @@
             ),
             React.createElement('div', {className: 'modifier-row'},
               Object.keys(advantageModifiers).map(function(adv) {
-                return React.createElement('label', {key: adv, className: 'checkbox-label'},
-                  React.createElement('input', {type: 'checkbox', checked: selectedAdvantages.indexOf(adv) >= 0, onChange: function() { handleAdvantageToggle(adv); }}),
+                var on = selectedAdvantages.indexOf(adv) >= 0;
+                return React.createElement('label', {key: adv, className: 'checkbox-label' + (on ? ' on' : '')},
+                  React.createElement('input', {type: 'checkbox', checked: on, onChange: function() { handleAdvantageToggle(adv); }}),
+                  React.createElement('span', {className: 'mini-tick'}),
                   adv
                 );
               })
             )
           ),
-
           React.createElement(CollapsibleSection, {title: 'Wound Tracker', id: 'wounds', defaultOpen: true},
+            React.createElement(MainWeaponBanner, {
+              weapon: mainWeapon, canCycle: weapons.length > 1, onCycle: cycleMain, crestKey: activeKey
+            }),
+            React.createElement('div', {className: 'hint'}, 'Tap a box: empty ' + RARROW + ' Shock ' + RARROW + ' Killing ' + RARROW + ' clear'),
             locationOrder.map(function(name) {
               return React.createElement(HitLocation, {
                 key: name, name: name,
                 number: hitLocations[name].number,
                 wounds: hitLocations[name].wounds,
-                armor: (armor && armor[name]) || 0,
+                arTotal: totalAR(name),
+                arSource: arSourceText(name),
+                bonus: (armorBonus && armorBonus[name]) || 0,
                 onWoundChange: function(loc, w) {
                   setHitLocations(function(p) {
                     var u = {}; Object.keys(p).forEach(function(k) { u[k] = k === loc ? {number: p[k].number, wounds: w} : p[k]; }); return u;
                   });
                 },
                 onArmorChange: function(loc, v) {
-                  setArmor(function(p) { var u = {}; Object.keys(p).forEach(function(k) { u[k] = p[k]; }); u[loc] = v; return u; });
+                  setArmorBonus(function(p) { var u = {}; Object.keys(p).forEach(function(k) { u[k] = p[k]; }); u[loc] = v; return u; });
                 }
               });
             }),
@@ -560,39 +1687,43 @@
               React.createElement('div', {className: 'legend-item'}, React.createElement('div', {className: 'legend-box killing'}), React.createElement('span', null, 'Killing'))
             )
           ),
-
-          React.createElement(CollapsibleSection, {title: 'Weapons', id: 'weapons', defaultOpen: false},
-            React.createElement(WeaponManager, {weapons: weapons, onChange: setWeapons})
+          React.createElement(CollapsibleSection, {title: 'Armory', id: 'armory', defaultOpen: false},
+            React.createElement(Armory, {
+              armor: armorPieces, onArmorChange: setArmorPieces,
+              weapons: weapons, onWeaponsChange: setWeapons,
+              primaryId: primaryId, onSetPrimary: setPrimaryId,
+              stack: armorStack, onStackChange: setArmorStack,
+              arFor: totalAR
+            })
           ),
-
           React.createElement(CollapsibleSection, {title: 'Inventory', id: 'inventory', defaultOpen: false},
             React.createElement(InventoryManager, {inventory: inventory, onChange: setInventory})
           ),
-
           React.createElement(CollapsibleSection, {title: 'Advantages & Problems', id: 'traits', defaultOpen: false},
             React.createElement('div', {className: 'traits-grid'},
               React.createElement(TraitList, {title: 'Advantages', items: advantages, onChange: setAdvantages, isProblems: false}),
               React.createElement(TraitList, {title: 'Problems', items: problems, onChange: setProblems, isProblems: true})
             )
           ),
-
           React.createElement('div', {className: 'controls'},
             React.createElement('button', {className: 'reset-btn', onClick: function() { if (window.confirm('Clear all wounds?')) setHitLocations(getInitialHitLocations(selectedRace, selectedAdvantages)); }}, 'Clear Wounds'),
             React.createElement('button', {className: 'reset-all-btn', onClick: function() {
               if (window.confirm('Reset everything? All character data will be lost.')) {
-                setCharName(''); setSelectedRace('Human'); setSelectedAdvantages([]);
-                setHitLocations(getInitialHitLocations('Human', []));
-                setArmor({'Head':0,'Torso':0,'Left Arm':0,'Right Arm':0,'Left Leg':0,'Right Leg':0});
+                setCharName(''); setSelectedRace('Orc'); setSelectedAdvantages([]);
+                setHitLocations(getInitialHitLocations('Orc', []));
+                setArmorBonus({'Head':0,'Torso':0,'Left Arm':0,'Right Arm':0,'Left Leg':0,'Right Leg':0});
+                setArmorPieces([]); setPrimaryId(null);
                 setXP(0); setWeapons([]); setInventory([]); setAdvantages([]); setProblems([]);
               }
             }}, 'Reset All')
-          )
+          ),
+          React.createElement('div', {className: 'footer-note'}, activeTheme.motto),
+          React.createElement('div', {className: 'credit-note'},
+            'Unofficial fan tool. Crest artwork original to this project. Warcraft is a trademark of Blizzard Entertainment, Inc.; this project is not affiliated with or endorsed by Blizzard.')
         )
       );
     };
-
     ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
-
   </script>
 </body>
 </html>
